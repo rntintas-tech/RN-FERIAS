@@ -1,0 +1,64 @@
+{% extends 'provisao/base.html' %}
+
+{% block title %}Importar Provisão{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+<div class="col-md-8">
+
+<div class="card">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0"><i class="bi bi-upload"></i> Importar Provisão do ERP</h5>
+    </div>
+    <div class="card-body">
+
+        <div class="alert alert-info">
+            <strong>Como funciona:</strong>
+            <ol class="mb-0 mt-1">
+                <li>Exporte a planilha de provisão de férias do ERP</li>
+                <li>Salve como CSV (separado por ponto e vírgula, vírgula ou tab)</li>
+                <li>Faça upload aqui ou cole o conteúdo diretamente</li>
+                <li>Revise as diferenças antes de confirmar</li>
+            </ol>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Opção 1: Upload de arquivo -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Upload do arquivo CSV
+                </label>
+                <input type="file" name="arquivo" class="form-control" accept=".csv,.txt,.xls,.xlsx">
+                <div class="form-text">Formatos aceitos: .csv, .txt</div>
+            </div>
+
+            <div class="text-center text-muted my-3">— ou —</div>
+
+            <!-- Opção 2: Colar o texto -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">
+                    <i class="bi bi-clipboard"></i> Cole o conteúdo aqui (Ctrl+V)
+                </label>
+                <textarea name="texto_csv" class="form-control font-monospace" rows="8"
+                    placeholder="Cole aqui o conteúdo copiado da planilha do ERP...
+(funciona com Tab, ponto e vírgula ou vírgula como separador)"></textarea>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-arrow-right-circle"></i> Analisar Importação
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</div>
+</div>
+{% endblock %}

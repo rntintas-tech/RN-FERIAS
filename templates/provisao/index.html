@@ -1,0 +1,235 @@
+{% extends 'provisao/base.html' %}
+
+{% block title %}Tabela de Provisão{% endblock %}
+
+{% block content %}
+
+<!-- Cards de resumo -->
+<div class="row mb-4 g-3">
+    <div class="col-md-3">
+        <div class="card stat-card total">
+            <div class="card-body py-2">
+                <div class="text-muted small">Total de colaboradores</div>
+                <div class="fs-4 fw-bold">{{ total }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card danger">
+            <div class="card-body py-2">
+                <div class="text-muted small">⚠ Urgente (passou do limite)</div>
+                <div class="fs-4 fw-bold text-danger">{{ urgentes }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card warning">
+            <div class="card-body py-2">
+                <div class="text-muted small">⏰ Atenção (limite próximo)</div>
+                <div class="fs-4 fw-bold text-warning">{{ atencao }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body py-2">
+                <div class="text-muted small">Última importação</div>
+                <div class="small fw-bold">
+                    {% if ultima_importacao %}
+                        {{ ultima_importacao.data_importacao|date:"d/m/Y H:i" }}
+                    {% else %}
+                        Nenhuma ainda
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Barra de busca -->
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <div class="input-group">
+            <input type="text" name="busca" class="form-control form-control-sm"
+                   placeholder="Buscar por nome ou cargo..." value="{{ busca }}">
+            <button class="btn btn-outline-secondary btn-sm" type="submit">
+                <i class="bi bi-search"></i>
+            </button>
+            {% if busca %}
+                <a href="{% url 'index' %}" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-x"></i> Limpar
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</form>
+
+<!-- Tabela principal -->
+<div class="table-responsive">
+<table class="table table-bordered table-hover table-ferias">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Colaborador</th>
+            <th>Cargo</th>
+            <th>Início Aquisit.</th>
+            <th>Fim Aquisit.</th>
+            <th>Limite Ideal</th>
+            <th>Limite Máximo</th>
+            <th class="text-center">Dias Direito</th>
+            <th class="text-center">Dias Gozo</th>
+            <th class="text-center">Dias Rest.</th>
+            <th>Mês das Férias</th>
+            <th class="text-center">Status</th>
+            <th>Obs.</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for colaborador in colaboradores %}
+            {% for periodo in colaborador.periodos.all %}
+                {% with badge=periodo.status_badge %}
+                <tr class="{% if periodo.status_limite == 'danger' %}tr-danger{% elif periodo.status_limite == 'warning' %}tr-warning{% endif %}">
+                    <!-- Código e nome só na primeira linha do colaborador -->
+                    {% if forloop.first %}
+                        <td rowspan="{{ colaborador.periodos.count }}">{{ colaborador.codigo }}</td>
+                        <td rowspan="{{ colaborador.periodos.count }}">
+                            <strong>{{ colaborador.nome }}</strong>
+                        </td>
+                        <td rowspan="{{ colaborador.periodos.count }}">{{ colaborador.cargo }}</td>
+                    {% endif %}
+
+                    <td>{{ periodo.inicio_aquisitivo|date:"d/m/Y" }}</td>
+                    <td>{{ periodo.fim_aquisitivo|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if periodo.limite_ideal %}
+                            {{ periodo.limite_ideal|date:"d/m/Y" }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if periodo.limite_maximo %}
+                            <strong>{{ periodo.limite_maximo|date:"d/m/Y" }}</strong>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="text-center">{{ periodo.dias_direito }}</td>
+                    <td class="text-center">{{ periodo.dias_gozo }}</td>
+                    <td class="text-center">{{ periodo.dias_restantes }}</td>
+
+                    <!-- Seletor de mês das férias -->
+                    <td>
+                        <div class="d-flex align-items-center gap-1">
+                            <input
+                                type="month"
+                                class="input-mes"
+                                data-periodo-id="{{ periodo.id }}"
+                                value="{{ periodo.mes_ferias|default:'' }}"
+                                title="Clique para definir o mês das férias"
+                            >
+                            <span class="badge bg-success badge-salvo" id="salvo-{{ periodo.id }}">✓</span>
+                        </div>
+                    </td>
+
+                    <!-- Badge de status -->
+                    <td class="text-center">
+                        <span class="badge {{ badge.0 }}">{{ badge.1 }}</span>
+                    </td>
+
+                    <!-- Observação -->
+                    <td>
+                        <input
+                            type="text"
+                            class="input-mes input-obs"
+                            style="width: 140px;"
+                            data-periodo-id="{{ periodo.id }}"
+                            value="{{ periodo.observacao }}"
+                            placeholder="Obs..."
+                            title="Observação"
+                        >
+                    </td>
+                </tr>
+                {% endwith %}
+            {% empty %}
+                <tr>
+                    <td>{{ colaborador.codigo }}</td>
+                    <td><strong>{{ colaborador.nome }}</strong></td>
+                    <td>{{ colaborador.cargo }}</td>
+                    <td colspan="10" class="text-muted text-center">Sem períodos aquisitivos</td>
+                </tr>
+            {% endfor %}
+        {% empty %}
+            <tr>
+                <td colspan="13" class="text-center text-muted py-4">
+                    Nenhum colaborador encontrado.
+                    <a href="{% url 'importar' %}">Importe a provisão do ERP</a> para começar.
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ─────────────────────────────────────────────────────────────────
+// Salva o mês de férias via AJAX ao mudar o input[type=month]
+// ─────────────────────────────────────────────────────────────────
+document.querySelectorAll('input[type=month]').forEach(input => {
+    input.addEventListener('change', function() {
+        const periodoId = this.dataset.periodoId;
+        const mesFrias  = this.value;  // "2025-07" ou "" para limpar
+
+        fetch("{% url 'salvar_mes_ferias' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ periodo_id: periodoId, mes_ferias: mesFrias }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                // Mostra badge "✓ salvo" brevemente
+                const badge = document.getElementById('salvo-' + periodoId);
+                badge.classList.add('show');
+                setTimeout(() => badge.classList.remove('show'), 2000);
+            } else {
+                alert('Erro ao salvar: ' + data.erro);
+            }
+        })
+        .catch(() => alert('Erro de conexão ao salvar.'));
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// Salva observação ao perder o foco do campo
+// ─────────────────────────────────────────────────────────────────
+document.querySelectorAll('.input-obs').forEach(input => {
+    // Guarda valor original para verificar se mudou
+    input.dataset.original = input.value;
+
+    input.addEventListener('blur', function() {
+        if (this.value === this.dataset.original) return;  // Não mudou, não salva
+
+        const periodoId = this.dataset.periodoId;
+        fetch("{% url 'salvar_observacao' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ periodo_id: periodoId, observacao: this.value }),
+        })
+        .then(r => r.json())
+        .then(data => { if (data.ok) this.dataset.original = this.value; });
+    });
+});
+
+// Lê cookie CSRF do Django
+function getCookie(name) {
+    const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : null;
+}
+</script>
+{% endblock %}
