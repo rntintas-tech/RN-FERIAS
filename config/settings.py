@@ -71,3 +71,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Limite de upload (para CSVs grandes)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+
+STATICFILES_DIRS = [BASE_DIR / 'static']

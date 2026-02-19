@@ -4,180 +4,240 @@
 
 {% block content %}
 
-<!-- Cards de resumo -->
-<div class="row mb-4 g-3">
-    <div class="col-md-3">
-        <div class="card stat-card total">
-            <div class="card-body py-2">
-                <div class="text-muted small">Total de colaboradores</div>
-                <div class="fs-4 fw-bold">{{ total }}</div>
+<!-- ═══════════════════════════════════════════════════
+     STAT CARDS
+     ═══════════════════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-md-3 animate-up">
+        <div class="rennova-card stat-card total h-100 mb-0">
+            <div class="rennova-card-body py-3">
+                <div class="stat-label">Total colaboradores</div>
+                <div class="stat-number text-primary">{{ total }}</div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card danger">
-            <div class="card-body py-2">
-                <div class="text-muted small">⚠ Urgente (passou do limite)</div>
-                <div class="fs-4 fw-bold text-danger">{{ urgentes }}</div>
+
+    <div class="col-6 col-md-3 animate-up">
+        <div class="rennova-card stat-card danger h-100 mb-0">
+            <div class="rennova-card-body py-3">
+                <div class="stat-label">⚠ Urgente</div>
+                <div class="stat-number text-danger">{{ urgentes }}</div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card warning">
-            <div class="card-body py-2">
-                <div class="text-muted small">⏰ Atenção (limite próximo)</div>
-                <div class="fs-4 fw-bold text-warning">{{ atencao }}</div>
+
+    <div class="col-6 col-md-3 animate-up">
+        <div class="rennova-card stat-card warning h-100 mb-0">
+            <div class="rennova-card-body py-3">
+                <div class="stat-label">⏰ Atenção</div>
+                <div class="stat-number" style="color:var(--warning-color);">{{ atencao }}</div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body py-2">
-                <div class="text-muted small">Última importação</div>
-                <div class="small fw-bold">
+
+    <div class="col-6 col-md-3 animate-up">
+        <div class="rennova-card stat-card info h-100 mb-0">
+            <div class="rennova-card-body py-3">
+                <div class="stat-label">Última importação</div>
+                <div class="fw-600" style="font-size:0.85rem;color:var(--info-color);">
                     {% if ultima_importacao %}
-                        {{ ultima_importacao.data_importacao|date:"d/m/Y H:i" }}
+                        {{ ultima_importacao.data_importacao|date:"d/m/Y" }}<br>
+                        <span class="text-muted" style="font-size:0.75rem;">{{ ultima_importacao.data_importacao|date:"H:i" }}</span>
                     {% else %}
-                        Nenhuma ainda
+                        <span class="text-muted">Nenhuma ainda</span>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
+
 </div>
 
-<!-- Barra de busca -->
-<form method="get" class="row g-2 mb-3">
-    <div class="col-md-4">
-        <div class="input-group">
-            <input type="text" name="busca" class="form-control form-control-sm"
-                   placeholder="Buscar por nome ou cargo..." value="{{ busca }}">
-            <button class="btn btn-outline-secondary btn-sm" type="submit">
-                <i class="bi bi-search"></i>
-            </button>
+<!-- ═══════════════════════════════════════════════════
+     BARRA DE BUSCA
+     ═══════════════════════════════════════════════════ -->
+<div class="rennova-card mb-3 animate-up" style="animation-delay:0.3s">
+    <div class="rennova-card-body py-2">
+        <form method="get" class="d-flex align-items-center gap-2 search-bar flex-wrap">
+            <div class="input-group" style="max-width:380px;">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text" name="busca"
+                       class="form-control border-start-0 ps-0"
+                       placeholder="Buscar por nome ou cargo..."
+                       value="{{ busca }}">
+                <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+                {% if busca %}
+                    <a href="{% url 'index' %}" class="btn btn-outline-danger">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                {% endif %}
+            </div>
             {% if busca %}
-                <a href="{% url 'index' %}" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-x"></i> Limpar
-                </a>
+                <span class="badge-rennova badge-rennova-primary">
+                    {{ total }} resultado{{ total|pluralize }}
+                </span>
             {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TABELA PRINCIPAL
+     ═══════════════════════════════════════════════════ -->
+<div class="rennova-card animate-up" style="animation-delay:0.38s">
+    <div class="rennova-card-header d-flex align-items-center justify-content-between py-2">
+        <span class="d-flex align-items-center gap-2">
+            <i class="bi bi-table"></i>
+            Períodos Aquisitivos
+        </span>
+        <small class="opacity-75">
+            Os meses de férias são salvos automaticamente ao selecionar
+        </small>
+    </div>
+
+    <div class="rennova-card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-ferias mb-0">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Colaborador</th>
+                        <th>Cargo</th>
+                        <th>Início Aquisit.</th>
+                        <th>Fim Aquisit.</th>
+                        <th>Limite Ideal</th>
+                        <th>Limite Máximo</th>
+                        <th class="text-center">Dir.</th>
+                        <th class="text-center">Gozo</th>
+                        <th class="text-center">Rest.</th>
+                        <th>Mês das Férias</th>
+                        <th class="text-center">Status</th>
+                        <th>Obs.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for colaborador in colaboradores %}
+                        {% for periodo in colaborador.periodos.all %}
+                            {% with badge=periodo.status_badge %}
+                            <tr class="{% if periodo.status_limite == 'danger' %}tr-danger{% elif periodo.status_limite == 'warning' %}tr-warning{% endif %}">
+
+                                {% if forloop.first %}
+                                    <td rowspan="{{ colaborador.periodos.count }}"
+                                        class="fw-semibold text-muted"
+                                        style="font-size:0.78rem;">{{ colaborador.codigo }}</td>
+                                    <td rowspan="{{ colaborador.periodos.count }}" class="fw-semibold">
+                                        {{ colaborador.nome }}
+                                    </td>
+                                    <td rowspan="{{ colaborador.periodos.count }}"
+                                        class="text-muted" style="font-size:0.78rem;">{{ colaborador.cargo }}</td>
+                                {% endif %}
+
+                                <td>{{ periodo.inicio_aquisitivo|date:"d/m/Y" }}</td>
+                                <td>{{ periodo.fim_aquisitivo|date:"d/m/Y" }}</td>
+
+                                <td class="{% if periodo.limite_ideal %}text-muted{% else %}text-muted{% endif %}">
+                                    {% if periodo.limite_ideal %}
+                                        {{ periodo.limite_ideal|date:"d/m/Y" }}
+                                    {% else %}—{% endif %}
+                                </td>
+
+                                <td class="fw-semibold">
+                                    {% if periodo.limite_maximo %}
+                                        <span class="{% if periodo.status_limite == 'danger' %}text-danger{% endif %}">
+                                            {{ periodo.limite_maximo|date:"d/m/Y" }}
+                                        </span>
+                                    {% else %}—{% endif %}
+                                </td>
+
+                                <td class="text-center">{{ periodo.dias_direito }}</td>
+                                <td class="text-center">{{ periodo.dias_gozo }}</td>
+                                <td class="text-center">
+                                    <span class="fw-semibold {% if periodo.dias_restantes > 0 %}text-primary{% endif %}">
+                                        {{ periodo.dias_restantes }}
+                                    </span>
+                                </td>
+
+                                <!-- Seletor de mês -->
+                                <td>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <input type="month"
+                                               class="input-mes"
+                                               data-periodo-id="{{ periodo.id }}"
+                                               value="{{ periodo.mes_ferias|default:'' }}"
+                                               title="Clique para definir o mês das férias">
+                                        <span class="badge bg-success badge-salvo"
+                                              id="salvo-{{ periodo.id }}">✓</span>
+                                    </div>
+                                </td>
+
+                                <!-- Badge de status -->
+                                <td class="text-center">
+                                    <span class="badge {{ badge.0 }}" style="font-size:0.72rem;">
+                                        {{ badge.1 }}
+                                    </span>
+                                </td>
+
+                                <!-- Observação -->
+                                <td>
+                                    <input type="text"
+                                           class="input-mes input-obs"
+                                           data-periodo-id="{{ periodo.id }}"
+                                           value="{{ periodo.observacao }}"
+                                           placeholder="Obs..."
+                                           title="Observação">
+                                </td>
+
+                            </tr>
+                            {% endwith %}
+                        {% empty %}
+                            <tr>
+                                <td>{{ colaborador.codigo }}</td>
+                                <td class="fw-semibold">{{ colaborador.nome }}</td>
+                                <td>{{ colaborador.cargo }}</td>
+                                <td colspan="10" class="text-muted text-center">Sem períodos aquisitivos</td>
+                            </tr>
+                        {% endfor %}
+                    {% empty %}
+                        <tr>
+                            <td colspan="13">
+                                <div class="empty-state">
+                                    <i class="bi bi-inbox"></i>
+                                    <p class="mb-2 fw-semibold">Nenhum colaborador encontrado</p>
+                                    <a href="{% url 'importar' %}" class="btn-rennova-primary btn-rennova-sm">
+                                        <i class="bi bi-cloud-upload me-1"></i> Importar provisão do ERP
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-</form>
+</div>
 
-<!-- Tabela principal -->
-<div class="table-responsive">
-<table class="table table-bordered table-hover table-ferias">
-    <thead>
-        <tr>
-            <th>Código</th>
-            <th>Colaborador</th>
-            <th>Cargo</th>
-            <th>Início Aquisit.</th>
-            <th>Fim Aquisit.</th>
-            <th>Limite Ideal</th>
-            <th>Limite Máximo</th>
-            <th class="text-center">Dias Direito</th>
-            <th class="text-center">Dias Gozo</th>
-            <th class="text-center">Dias Rest.</th>
-            <th>Mês das Férias</th>
-            <th class="text-center">Status</th>
-            <th>Obs.</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for colaborador in colaboradores %}
-            {% for periodo in colaborador.periodos.all %}
-                {% with badge=periodo.status_badge %}
-                <tr class="{% if periodo.status_limite == 'danger' %}tr-danger{% elif periodo.status_limite == 'warning' %}tr-warning{% endif %}">
-                    <!-- Código e nome só na primeira linha do colaborador -->
-                    {% if forloop.first %}
-                        <td rowspan="{{ colaborador.periodos.count }}">{{ colaborador.codigo }}</td>
-                        <td rowspan="{{ colaborador.periodos.count }}">
-                            <strong>{{ colaborador.nome }}</strong>
-                        </td>
-                        <td rowspan="{{ colaborador.periodos.count }}">{{ colaborador.cargo }}</td>
-                    {% endif %}
-
-                    <td>{{ periodo.inicio_aquisitivo|date:"d/m/Y" }}</td>
-                    <td>{{ periodo.fim_aquisitivo|date:"d/m/Y" }}</td>
-                    <td>
-                        {% if periodo.limite_ideal %}
-                            {{ periodo.limite_ideal|date:"d/m/Y" }}
-                        {% else %}—{% endif %}
-                    </td>
-                    <td>
-                        {% if periodo.limite_maximo %}
-                            <strong>{{ periodo.limite_maximo|date:"d/m/Y" }}</strong>
-                        {% else %}—{% endif %}
-                    </td>
-                    <td class="text-center">{{ periodo.dias_direito }}</td>
-                    <td class="text-center">{{ periodo.dias_gozo }}</td>
-                    <td class="text-center">{{ periodo.dias_restantes }}</td>
-
-                    <!-- Seletor de mês das férias -->
-                    <td>
-                        <div class="d-flex align-items-center gap-1">
-                            <input
-                                type="month"
-                                class="input-mes"
-                                data-periodo-id="{{ periodo.id }}"
-                                value="{{ periodo.mes_ferias|default:'' }}"
-                                title="Clique para definir o mês das férias"
-                            >
-                            <span class="badge bg-success badge-salvo" id="salvo-{{ periodo.id }}">✓</span>
-                        </div>
-                    </td>
-
-                    <!-- Badge de status -->
-                    <td class="text-center">
-                        <span class="badge {{ badge.0 }}">{{ badge.1 }}</span>
-                    </td>
-
-                    <!-- Observação -->
-                    <td>
-                        <input
-                            type="text"
-                            class="input-mes input-obs"
-                            style="width: 140px;"
-                            data-periodo-id="{{ periodo.id }}"
-                            value="{{ periodo.observacao }}"
-                            placeholder="Obs..."
-                            title="Observação"
-                        >
-                    </td>
-                </tr>
-                {% endwith %}
-            {% empty %}
-                <tr>
-                    <td>{{ colaborador.codigo }}</td>
-                    <td><strong>{{ colaborador.nome }}</strong></td>
-                    <td>{{ colaborador.cargo }}</td>
-                    <td colspan="10" class="text-muted text-center">Sem períodos aquisitivos</td>
-                </tr>
-            {% endfor %}
-        {% empty %}
-            <tr>
-                <td colspan="13" class="text-center text-muted py-4">
-                    Nenhum colaborador encontrado.
-                    <a href="{% url 'importar' %}">Importe a provisão do ERP</a> para começar.
-                </td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<!-- Legenda de status -->
+<div class="d-flex gap-3 flex-wrap mt-2" style="font-size:0.78rem;color:var(--text-muted);">
+    <span><span class="badge bg-danger">⚠ URGENTE</span> — passou do limite máximo</span>
+    <span><span class="badge bg-warning text-dark">⏰ Atenção</span> — limite ideal ≤ 60 dias</span>
+    <span><span class="badge bg-success">✓ OK</span> — dentro do prazo</span>
 </div>
 
 {% endblock %}
 
+
 {% block extra_js %}
 <script>
 // ─────────────────────────────────────────────────────────────────
-// Salva o mês de férias via AJAX ao mudar o input[type=month]
+// Salva mês de férias via AJAX ao mudar o input[type=month]
 // ─────────────────────────────────────────────────────────────────
 document.querySelectorAll('input[type=month]').forEach(input => {
-    input.addEventListener('change', function() {
+    input.addEventListener('change', function () {
         const periodoId = this.dataset.periodoId;
-        const mesFrias  = this.value;  // "2025-07" ou "" para limpar
+        const mesFrias  = this.value;
 
         fetch("{% url 'salvar_mes_ferias' %}", {
             method: 'POST',
@@ -190,10 +250,16 @@ document.querySelectorAll('input[type=month]').forEach(input => {
         .then(r => r.json())
         .then(data => {
             if (data.ok) {
-                // Mostra badge "✓ salvo" brevemente
                 const badge = document.getElementById('salvo-' + periodoId);
                 badge.classList.add('show');
-                setTimeout(() => badge.classList.remove('show'), 2000);
+                // Pisca levemente a linha para feedback visual
+                const row = this.closest('tr');
+                row.style.transition = 'background-color 0.3s';
+                row.style.backgroundColor = '#e8f5e9';
+                setTimeout(() => {
+                    badge.classList.remove('show');
+                    row.style.backgroundColor = '';
+                }, 2000);
             } else {
                 alert('Erro ao salvar: ' + data.erro);
             }
@@ -203,14 +269,13 @@ document.querySelectorAll('input[type=month]').forEach(input => {
 });
 
 // ─────────────────────────────────────────────────────────────────
-// Salva observação ao perder o foco do campo
+// Salva observação ao perder o foco (só se mudou)
 // ─────────────────────────────────────────────────────────────────
 document.querySelectorAll('.input-obs').forEach(input => {
-    // Guarda valor original para verificar se mudou
     input.dataset.original = input.value;
 
-    input.addEventListener('blur', function() {
-        if (this.value === this.dataset.original) return;  // Não mudou, não salva
+    input.addEventListener('blur', function () {
+        if (this.value === this.dataset.original) return;
 
         const periodoId = this.dataset.periodoId;
         fetch("{% url 'salvar_observacao' %}", {
@@ -222,7 +287,14 @@ document.querySelectorAll('.input-obs').forEach(input => {
             body: JSON.stringify({ periodo_id: periodoId, observacao: this.value }),
         })
         .then(r => r.json())
-        .then(data => { if (data.ok) this.dataset.original = this.value; });
+        .then(data => {
+            if (data.ok) {
+                this.dataset.original = this.value;
+                // Pulso sutil de confirmação
+                this.style.borderColor = '#28a745';
+                setTimeout(() => { this.style.borderColor = ''; }, 1500);
+            }
+        });
     });
 });
 

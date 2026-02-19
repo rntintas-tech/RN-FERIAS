@@ -5,133 +5,192 @@
 {% block content %}
 
 <div class="row justify-content-center">
-<div class="col-md-9">
+<div class="col-lg-8 col-md-10">
 
-<div class="card">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Análise da Importação</h5>
+    <!-- Cabeçalho da página -->
+    <div class="d-flex align-items-center gap-3 mb-4 animate-up">
+        <div style="width:48px;height:48px;border-radius:12px;
+                    background:linear-gradient(135deg,#2d3748,#1a202c);
+                    display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-clipboard-check-fill text-white fs-4"></i>
+        </div>
+        <div>
+            <h4 class="mb-0 fw-bold">Análise da Importação</h4>
+            <p class="text-muted mb-0" style="font-size:0.85rem;">
+                Revise as diferenças abaixo e confirme para atualizar o banco
+            </p>
+        </div>
     </div>
-    <div class="card-body">
 
-        <!-- Resumo geral -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-body py-2">
-                        <div class="text-muted small">Linhas no CSV</div>
-                        <div class="fs-4 fw-bold">{{ total_linhas }}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center border-success">
-                    <div class="card-body py-2">
-                        <div class="text-muted small">Colaboradores novos</div>
-                        <div class="fs-4 fw-bold text-success">{{ novos|length }}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center border-danger">
-                    <div class="card-body py-2">
-                        <div class="text-muted small">Não estão na nova lista</div>
-                        <div class="fs-4 fw-bold text-danger">{{ removidos|length }}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center border-primary">
-                    <div class="card-body py-2">
-                        <div class="text-muted small">Já existem (serão atualizados)</div>
-                        <div class="fs-4 fw-bold text-primary">{{ existentes_count }}</div>
-                    </div>
+    <!-- ═══ STAT CARDS ═══ -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-6 col-md-3 animate-up">
+            <div class="rennova-card stat-card total mb-0 h-100">
+                <div class="rennova-card-body py-3">
+                    <div class="stat-label">Linhas no CSV</div>
+                    <div class="stat-number text-primary">{{ total_linhas }}</div>
                 </div>
             </div>
         </div>
 
-        <form method="post" action="{% url 'confirmar_importacao' %}">
-            {% csrf_token %}
-
-            <!-- Novos colaboradores -->
-            {% if novos %}
-            <div class="card mb-3 border-success">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-person-plus"></i> {{ novos|length }} colaborador(es) NOVO(S) encontrado(s)</span>
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" name="adicionar_novos" value="1"
-                               id="chkNovos" checked>
-                        <label class="form-check-label text-white" for="chkNovos">Adicionar ao sistema</label>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0 row">
-                        {% for nome in novos_nomes %}
-                            <li class="col-md-6 text-success">
-                                <i class="bi bi-plus-circle"></i> {{ nome }}
-                            </li>
-                        {% endfor %}
-                    </ul>
+        <div class="col-6 col-md-3 animate-up">
+            <div class="rennova-card stat-card mb-0 h-100" style="border-color:var(--success-color)">
+                <div class="rennova-card-body py-3">
+                    <div class="stat-label">Novos</div>
+                    <div class="stat-number" style="color:var(--success-color)">{{ novos|length }}</div>
                 </div>
             </div>
-            {% else %}
-                <input type="hidden" name="adicionar_novos" value="0">
-            {% endif %}
+        </div>
 
-            <!-- Colaboradores que saíram -->
-            {% if removidos %}
-            <div class="card mb-3 border-danger">
-                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-person-dash"></i> {{ removidos|length }} colaborador(es) NÃO ESTÃO na nova provisão</span>
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" name="remover_antigos" value="1"
-                               id="chkRemovidos">
-                        <label class="form-check-label text-white" for="chkRemovidos">Inativar no sistema</label>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0 row">
-                        {% for obj in removidos_objs %}
-                            <li class="col-md-6 text-danger">
-                                <i class="bi bi-dash-circle"></i> {{ obj.nome }} ({{ obj.codigo }})
-                            </li>
-                        {% endfor %}
-                    </ul>
-                    <small class="text-muted mt-2 d-block">
-                        ⚠ Inativar não apaga os dados, apenas oculta da tabela principal.
-                    </small>
+        <div class="col-6 col-md-3 animate-up">
+            <div class="rennova-card stat-card danger mb-0 h-100">
+                <div class="rennova-card-body py-3">
+                    <div class="stat-label">Não estão na lista</div>
+                    <div class="stat-number text-danger">{{ removidos|length }}</div>
                 </div>
             </div>
-            {% else %}
-                <input type="hidden" name="remover_antigos" value="0">
-            {% endif %}
+        </div>
 
-            {% if not novos and not removidos %}
-                <div class="alert alert-success">
-                    <i class="bi bi-check-circle"></i>
-                    Nenhuma diferença de colaboradores! Apenas os dados numéricos (dias, limites) serão atualizados.
-                    <br><small>Os meses de férias que você já definiu serão <strong>preservados</strong>.</small>
+        <div class="col-6 col-md-3 animate-up">
+            <div class="rennova-card stat-card info mb-0 h-100">
+                <div class="rennova-card-body py-3">
+                    <div class="stat-label">Serão atualizados</div>
+                    <div class="stat-number" style="color:var(--info-color)">{{ existentes_count }}</div>
                 </div>
-            {% endif %}
-
-            <div class="alert alert-warning">
-                <i class="bi bi-info-circle"></i>
-                Os <strong>meses de férias</strong> e <strong>observações</strong> já preenchidos 
-                serão <strong>preservados</strong> mesmo após a atualização.
             </div>
-
-            <div class="d-flex justify-content-between mt-3">
-                <a href="{% url 'importar' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Voltar e reenviar
-                </a>
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="bi bi-check-circle"></i> Confirmar e Importar
-                </button>
-            </div>
-        </form>
+        </div>
 
     </div>
-</div>
+
+    <!-- ═══ FORMULÁRIO DE CONFIRMAÇÃO ═══ -->
+    <form method="post" action="{% url 'confirmar_importacao' %}">
+        {% csrf_token %}
+
+        <!-- Colaboradores novos -->
+        {% if novos %}
+        <div class="rennova-card animate-up mb-3" style="border:1.5px solid var(--success-color);">
+            <div class="rennova-card-header d-flex justify-content-between align-items-center py-2"
+                 style="background:linear-gradient(135deg,#28a745,#20c997);">
+                <span class="d-flex align-items-center gap-2">
+                    <i class="bi bi-person-plus-fill"></i>
+                    {{ novos|length }} colaborador(es) NOVO(S)
+                </span>
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox"
+                           name="adicionar_novos" value="1" id="chkNovos" checked>
+                    <label class="form-check-label text-white fw-semibold" for="chkNovos">
+                        Adicionar ao sistema
+                    </label>
+                </div>
+            </div>
+            <div class="rennova-card-body">
+                <div class="row g-1">
+                    {% for nome in novos_nomes %}
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2"
+                                 style="font-size:0.85rem;color:var(--success-color);">
+                                <i class="bi bi-plus-circle-fill"></i>
+                                {{ nome }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+            <input type="hidden" name="adicionar_novos" value="0">
+        {% endif %}
+
+        <!-- Colaboradores que saíram -->
+        {% if removidos %}
+        <div class="rennova-card animate-up mb-3" style="border:1.5px solid var(--danger-color);">
+            <div class="rennova-card-header d-flex justify-content-between align-items-center py-2"
+                 style="background:var(--danger-gradient);">
+                <span class="d-flex align-items-center gap-2">
+                    <i class="bi bi-person-dash-fill"></i>
+                    {{ removidos|length }} colaborador(es) NÃO ESTÃO na nova provisão
+                </span>
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox"
+                           name="remover_antigos" value="1" id="chkRemovidos">
+                    <label class="form-check-label text-white fw-semibold" for="chkRemovidos">
+                        Inativar no sistema
+                    </label>
+                </div>
+            </div>
+            <div class="rennova-card-body">
+                <div class="row g-1">
+                    {% for obj in removidos_objs %}
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2"
+                                 style="font-size:0.85rem;color:var(--danger-color);">
+                                <i class="bi bi-dash-circle-fill"></i>
+                                {{ obj.nome }}
+                                <span class="badge-rennova badge-rennova-danger"
+                                      style="font-size:0.68rem;">{{ obj.codigo }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <small class="text-muted d-block mt-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Inativar não apaga os dados, apenas oculta da tabela principal.
+                </small>
+            </div>
+        </div>
+        {% else %}
+            <input type="hidden" name="remover_antigos" value="0">
+        {% endif %}
+
+        <!-- Sem diferenças -->
+        {% if not novos and not removidos %}
+        <div class="rennova-alert rennova-alert-success d-flex gap-2 align-items-center animate-up mb-3">
+            <i class="bi bi-check-circle-fill fs-5 flex-shrink-0"></i>
+            <div>
+                <strong>Nenhuma diferença de colaboradores!</strong><br>
+                Apenas os dados numéricos (dias, limites) serão atualizados.
+                Os meses de férias já definidos serão <strong>preservados</strong>.
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Aviso de preservação -->
+        <div class="rennova-alert rennova-alert-warning d-flex gap-2 align-items-start animate-up mb-4">
+            <i class="bi bi-shield-check-fill fs-5 mt-1 flex-shrink-0"></i>
+            <div>
+                <strong>Seus dados estão protegidos.</strong>
+                Os <strong>meses de férias</strong> e <strong>observações</strong> já preenchidos
+                serão <strong>preservados</strong> após a atualização.
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 animate-up">
+            <a href="{% url 'importar' %}" class="btn-rennova-outline d-flex align-items-center gap-1">
+                <i class="bi bi-arrow-left"></i> Voltar e reenviar
+            </a>
+            <button type="submit" class="btn-rennova-primary btn-rennova-lg d-flex align-items-center gap-2"
+                    id="btnConfirmar">
+                <i class="bi bi-check-circle-fill"></i>
+                Confirmar e Importar
+            </button>
+        </div>
+
+    </form>
 
 </div>
 </div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// Feedback de loading ao confirmar
+document.getElementById('btnConfirmar').addEventListener('click', function () {
+    this.disabled = true;
+    this.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Importando...`;
+});
+</script>
 {% endblock %}

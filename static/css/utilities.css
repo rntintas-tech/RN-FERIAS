@@ -1,0 +1,194 @@
+/* 
+ * RennovaApp - Classes UtilitÃ¡rias
+ * 
+ * Este arquivo contÃ©m classes utilitÃ¡rias para aplicar rapidamente 
+ * espaÃ§amentos, cores, tipografia e outros estilos consistentes
+ */
+
+ @import 'variables.css';
+
+ /* ---------- Cores de Texto ---------- */
+ .text-primary {
+   color: var(--primary-color) !important;
+ }
+ 
+ .text-secondary {
+   color: var(--secondary-color) !important;
+ }
+ 
+ .text-success {
+   color: var(--success-color) !important;
+ }
+ 
+ .text-danger {
+   color: var(--danger-color) !important;
+ }
+ 
+ .text-warning {
+   color: var(--warning-color) !important;
+ }
+ 
+ .text-info {
+   color: var(--info-color) !important;
+ }
+ 
+ .text-muted {
+   color: var(--text-muted) !important;
+ }
+ 
+ /* ---------- Backgrounds ---------- */
+ .bg-primary-gradient {
+   background: var(--primary-gradient) !important;
+   color: var(--white);
+ }
+ 
+ .bg-secondary-gradient {
+   background: var(--secondary-gradient) !important;
+   color: var(--white);
+ }
+ 
+ .bg-success-gradient {
+   background: var(--success-gradient) !important;
+   color: var(--white);
+ }
+ 
+ .bg-danger-gradient {
+   background: var(--danger-gradient) !important;
+   color: var(--white);
+ }
+ 
+ .bg-warning-gradient {
+   background: var(--warning-gradient) !important;
+   color: #212529;
+ }
+ 
+ .bg-light {
+   background-color: var(--light-bg) !important;
+ }
+ 
+ /* ---------- Tipografia ---------- */
+ .fw-medium {
+   font-weight: var(--font-weight-medium) !important;
+ }
+ 
+ .fs-sm {
+   font-size: var(--font-size-sm) !important;
+ }
+ 
+ .fs-base {
+   font-size: var(--font-size-base) !important;
+ }
+ 
+ .fs-lg {
+   font-size: var(--font-size-lg) !important;
+ }
+ 
+ /* ---------- Bordas ---------- */
+ .rounded-sm {
+   border-radius: var(--border-radius-sm) !important;
+ }
+ 
+ .rounded-md {
+   border-radius: var(--border-radius-md) !important;
+ }
+ 
+ .rounded-lg {
+   border-radius: var(--border-radius-lg) !important;
+ }
+ 
+ .rounded-xl {
+   border-radius: var(--border-radius-xl) !important;
+ }
+ 
+ /* ---------- Sombras ---------- */
+ .shadow-sm {
+   box-shadow: var(--box-shadow-sm) !important;
+ }
+ 
+ .shadow-md {
+   box-shadow: var(--box-shadow-md) !important;
+ }
+ 
+ .shadow-lg {
+   box-shadow: var(--box-shadow-lg) !important;
+ }
+ 
+ .shadow-hover {
+   transition: box-shadow var(--transition-speed-normal) var(--transition-timing);
+ }
+ 
+ .shadow-hover:hover {
+   box-shadow: var(--box-shadow-hover) !important;
+ }
+ 
+ /* ---------- TransformaÃ§Ãµes ---------- */
+ .hover-lift {
+   transition: transform var(--transition-speed-normal) var(--transition-timing);
+ }
+ 
+ .hover-lift:hover {
+   transform: translateY(-5px);
+ }
+ 
+ /* ---------- Bordas ---------- */
+ .border-primary {
+   border-color: var(--primary-color) !important;
+ }
+ 
+ .border-left-accent {
+   border-left: 4px solid var(--primary-color);
+ }
+ 
+ .border-bottom-accent {
+   border-bottom: 2px solid var(--primary-color);
+ }
+ 
+ /* ---------- AnimaÃ§Ãµes ---------- */
+ .fade-in {
+   animation: fadeIn 0.5s ease forwards;
+ }
+ 
+ @keyframes fadeIn {
+   from { opacity: 0; transform: translateY(10px); }
+   to { opacity: 1; transform: translateY(0); }
+ }
+ 
+ .pulse {
+   animation: pulse 2s infinite;
+ }
+ 
+ @keyframes pulse {
+   0% { transform: scale(1); }
+   50% { transform: scale(1.05); }
+   100% { transform: scale(1); }
+ }
+ 
+ /* ---------- EspaÃ§amentos personalizados ---------- */
+ .gap-xs { gap: var(--spacing-xs) !important; }
+ .gap-sm { gap: var(--spacing-sm) !important; }
+ .gap-md { gap: var(--spacing-md) !important; }
+ .gap-lg { gap: var(--spacing-lg) !important; }
+ .gap-xl { gap: var(--spacing-xl) !important; }
+ 
+ /* Classes utilitÃ¡rias para Ã¡reas clicÃ¡veis */
+ .clickable {
+   cursor: pointer;
+   transition: all var(--transition-speed-normal) var(--transition-timing);
+ }
+ 
+ .clickable:hover {
+   opacity: 0.8;
+ }
+ 
+ /* Classes para linhas de texto */
+ .line-clamp-1,
+ .line-clamp-2,
+ .line-clamp-3 {
+   display: -webkit-box;
+   -webkit-box-orient: vertical;
+   overflow: hidden;
+ }
+ 
+ .line-clamp-1 { -webkit-line-clamp: 1; }
+ .line-clamp-2 { -webkit-line-clamp: 2; }
+ .line-clamp-3 { -webkit-line-clamp: 3; }

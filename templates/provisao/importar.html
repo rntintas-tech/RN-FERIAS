@@ -5,60 +5,161 @@
 {% block content %}
 
 <div class="row justify-content-center">
-<div class="col-md-8">
+<div class="col-lg-7 col-md-9">
 
-<div class="card">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0"><i class="bi bi-upload"></i> Importar Provisão do ERP</h5>
+    <!-- Cabeçalho da página -->
+    <div class="d-flex align-items-center gap-3 mb-4 animate-up">
+        <div style="width:48px;height:48px;border-radius:12px;background:var(--rn-gradient);
+                    display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-cloud-upload-fill text-white fs-4"></i>
+        </div>
+        <div>
+            <h4 class="mb-0 fw-bold">Importar Provisão do ERP</h4>
+            <p class="text-muted mb-0" style="font-size:0.85rem;">
+                Faça upload do CSV exportado e revise antes de confirmar
+            </p>
+        </div>
     </div>
-    <div class="card-body">
 
-        <div class="alert alert-info">
-            <strong>Como funciona:</strong>
-            <ol class="mb-0 mt-1">
+    <!-- Alerta informativo -->
+    <div class="rennova-alert rennova-alert-primary d-flex gap-3 align-items-start animate-up mb-4"
+         style="animation-delay:0.1s">
+        <i class="bi bi-info-circle-fill fs-5 mt-1 flex-shrink-0"></i>
+        <div>
+            <strong>Como funciona a importação:</strong>
+            <ol class="mb-0 mt-1 ps-3">
                 <li>Exporte a planilha de provisão de férias do ERP</li>
-                <li>Salve como CSV (separado por ponto e vírgula, vírgula ou tab)</li>
-                <li>Faça upload aqui ou cole o conteúdo diretamente</li>
-                <li>Revise as diferenças antes de confirmar</li>
+                <li>Salve como CSV (separado por <code>;</code>, <code>,</code> ou Tab)</li>
+                <li>Faça upload ou cole o conteúdo abaixo</li>
+                <li>Revise as diferenças antes de confirmar — meses de férias já preenchidos são preservados</li>
             </ol>
         </div>
-
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-
-            <!-- Opção 1: Upload de arquivo -->
-            <div class="mb-3">
-                <label class="form-label fw-bold">
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Upload do arquivo CSV
-                </label>
-                <input type="file" name="arquivo" class="form-control" accept=".csv,.txt,.xls,.xlsx">
-                <div class="form-text">Formatos aceitos: .csv, .txt</div>
-            </div>
-
-            <div class="text-center text-muted my-3">— ou —</div>
-
-            <!-- Opção 2: Colar o texto -->
-            <div class="mb-3">
-                <label class="form-label fw-bold">
-                    <i class="bi bi-clipboard"></i> Cole o conteúdo aqui (Ctrl+V)
-                </label>
-                <textarea name="texto_csv" class="form-control font-monospace" rows="8"
-                    placeholder="Cole aqui o conteúdo copiado da planilha do ERP...
-(funciona com Tab, ponto e vírgula ou vírgula como separador)"></textarea>
-            </div>
-
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <a href="{% url 'index' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-x"></i> Cancelar
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-arrow-right-circle"></i> Analisar Importação
-                </button>
-            </div>
-        </form>
     </div>
-</div>
+
+    <!-- Card do formulário -->
+    <div class="rennova-card animate-up" style="animation-delay:0.2s">
+        <div class="rennova-card-header">
+            <span class="d-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark-spreadsheet"></i>
+                Enviar arquivo ou colar dados
+            </span>
+        </div>
+
+        <div class="rennova-card-body">
+            <form method="post" enctype="multipart/form-data" id="formImportar">
+                {% csrf_token %}
+
+                <!-- Upload de arquivo -->
+                <div class="form-rennova-group">
+                    <label class="form-rennova-label">
+                        <i class="bi bi-file-earmark-arrow-up me-1"></i>
+                        Arquivo CSV
+                    </label>
+
+                    <!-- Zona de drag & drop -->
+                    <div class="upload-zone" id="uploadZone">
+                        <i class="bi bi-cloud-arrow-up text-muted"
+                           style="font-size:2.5rem;display:block;margin-bottom:0.75rem;"></i>
+                        <p class="mb-1 fw-semibold">Arraste o arquivo aqui ou clique para selecionar</p>
+                        <p class="text-muted mb-0" style="font-size:0.82rem;">
+                            Formatos: .csv ou .txt — tamanho máximo: 10 MB
+                        </p>
+                        <input type="file" name="arquivo" id="fileInput"
+                               accept=".csv,.txt"
+                               class="d-none">
+                    </div>
+                    <div id="fileLabel" class="mt-2 text-muted" style="font-size:0.83rem;"></div>
+                </div>
+
+                <!-- Separador -->
+                <div class="d-flex align-items-center gap-3 my-4">
+                    <hr class="flex-grow-1 m-0">
+                    <span class="text-muted" style="font-size:0.85rem;">ou cole diretamente</span>
+                    <hr class="flex-grow-1 m-0">
+                </div>
+
+                <!-- Textarea para colar -->
+                <div class="form-rennova-group mb-0">
+                    <label class="form-rennova-label" for="texto_csv">
+                        <i class="bi bi-clipboard me-1"></i>
+                        Conteúdo copiado da planilha
+                        <span class="text-muted fw-normal">(Ctrl+V aqui)</span>
+                    </label>
+                    <textarea name="texto_csv" id="texto_csv"
+                              class="form-rennova-control font-monospace"
+                              rows="7"
+                              placeholder="Cole aqui o conteúdo copiado da planilha do ERP...
+(Tab, ponto e vírgula ou vírgula como separador — qualquer um funciona)"></textarea>
+                </div>
+
+                <!-- Ações -->
+                <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2">
+                    <a href="{% url 'index' %}" class="btn-rennova-outline d-flex align-items-center gap-1">
+                        <i class="bi bi-arrow-left"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn-rennova-primary d-flex align-items-center gap-2"
+                            id="btnAnalisar">
+                        <i class="bi bi-search"></i>
+                        Analisar Importação
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
 </div>
 </div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// ─── Upload zone: clique para selecionar arquivo ───
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+const fileLabel  = document.getElementById('fileLabel');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) {
+        const f = fileInput.files[0];
+        uploadZone.style.borderColor = 'var(--secondary-color)';
+        uploadZone.style.background  = '#f0f7ff';
+        fileLabel.innerHTML = `<i class="bi bi-file-earmark-check text-success me-1"></i>
+            <strong>${f.name}</strong> — ${(f.size/1024).toFixed(1)} KB`;
+    }
+});
+
+// ─── Drag & Drop ───
+uploadZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+});
+
+['dragleave','dragend'].forEach(evt =>
+    uploadZone.addEventListener(evt, () => uploadZone.classList.remove('dragover'))
+);
+
+uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length) {
+        fileInput.files = files;
+        const f = files[0];
+        uploadZone.style.borderColor = 'var(--secondary-color)';
+        fileLabel.innerHTML = `<i class="bi bi-file-earmark-check text-success me-1"></i>
+            <strong>${f.name}</strong> — ${(f.size/1024).toFixed(1)} KB`;
+    }
+});
+
+// ─── Feedback de loading ao submeter ───
+document.getElementById('formImportar').addEventListener('submit', () => {
+    const btn = document.getElementById('btnAnalisar');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Analisando...`;
+});
+</script>
 {% endblock %}
