@@ -142,12 +142,13 @@
 
                                 <td style="white-space:nowrap;">{{ periodo.inicio_aquisitivo|date:"d/m/Y" }}</td>
 
-                                <td class="{% if periodo.status_limite == 'warning' or periodo.status_limite == 'danger' %}text-danger fw-semibold{% endif %}"
-                                    style="white-space:nowrap;">
+                                <!-- Limite Ideal: sem formatação de alerta — apenas informativo -->
+                                <td style="white-space:nowrap;">
                                     {{ periodo.limite_ideal|date:"d/m/Y"|default:"—" }}
                                 </td>
 
-                                <td class="{% if periodo.status_limite == 'danger' %}text-danger fw-semibold{% endif %}"
+                                <!-- Limite Máximo: fica vermelho quando o prazo está chegando -->
+                                <td class="{% if periodo.status_limite == 'warning' or periodo.status_limite == 'danger' %}text-danger fw-semibold{% endif %}"
                                     style="white-space:nowrap;">
                                     {{ periodo.limite_maximo|date:"d/m/Y"|default:"—" }}
                                 </td>
@@ -156,7 +157,7 @@
                                 <td class="text-center">{{ periodo.dias_gozo|floatformat:0 }}</td>
                                 <td class="text-center">{{ periodo.dias_restantes|floatformat:0 }}</td>
 
-                                <!-- Férias Agendadas: mostra resumo das parcelas + botão de edição -->
+                                <!-- Férias Agendadas: badges coloridos por situação do mês -->
                                 <td class="cell-ferias"
                                     id="cell-ferias-{{ periodo.id }}"
                                     data-periodo-id="{{ periodo.id }}"
@@ -167,8 +168,10 @@
 
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <span class="parcelas-resumo" id="resumo-{{ periodo.id }}">
+                                            {% now "Y-m" as mes_atual %}
                                             {% for parcela in periodo.parcelas.all %}
-                                                <span class="badge-parcela">
+                                                {# Mês passado → verde | Mês atual → amarelo | Futuro → azul escuro #}
+                                                <span class="badge-parcela {% if parcela.mes_ferias < mes_atual %}badge-parcela-passada{% elif parcela.mes_ferias == mes_atual %}badge-parcela-atual{% endif %}">
                                                     {{ parcela.mes_ferias_display }}{% if parcela.dias %} ({{ parcela.dias|floatformat:0 }}d){% endif %}
                                                 </span>
                                             {% empty %}
@@ -221,9 +224,11 @@
 
 <!-- Legenda de status -->
 <div class="d-flex gap-3 flex-wrap mt-2" style="font-size:0.78rem;color:var(--text-muted);">
-    <span><span class="badge bg-danger">⚠ URGENTE</span> — passou do limite máximo</span>
-    <span><span class="badge bg-warning text-dark">⏰ Atenção</span> — limite ideal ≤ 60 dias</span>
-    <span><span class="badge bg-success">✓ OK</span> — dentro do prazo</span>
+    <span><span class="badge bg-danger">⚠ URGENTE</span> — limite máximo em ≤ 60 dias</span>
+    <span><span class="badge bg-warning text-dark">⏰ Atenção</span> — limite máximo em ≤ 90 dias</span>
+    <span><span class="badge bg-success">✓ OK</span> — dentro do prazo ou férias completas</span>
+    <span><span class="badge-parcela badge-parcela-atual" style="font-size:0.73rem;">Mês atual</span></span>
+    <span><span class="badge-parcela badge-parcela-passada" style="font-size:0.73rem;">Já passou</span></span>
 </div>
 
 
@@ -434,16 +439,25 @@ function atualizarUI(periodoId, parcelas, diasUsados, diasDireito) {
     const cell = document.getElementById('cell-ferias-' + periodoId);
     cell.dataset.parcelas = JSON.stringify(parcelas);
 
-    // Atualiza o resumo na célula da tabela
+    // Atualiza o resumo na célula da tabela com cores por mês
     const resumo = document.getElementById('resumo-' + periodoId);
     if (!parcelas.length) {
         resumo.innerHTML = `<span class="text-muted" style="font-size:0.78rem;">—</span>`;
         return;
     }
-    resumo.innerHTML = parcelas.map(p =>
-        `<span class="badge-parcela">${p.mes_ferias_display}${p.dias ? ' (' + parseFloat(p.dias) + 'd)' : ''}</span>`
-    ).join('');
+
+    // "2026-02" — formato YYYY-MM idêntico ao mes_ferias salvo no banco
+    const mesAtual = new Date().toISOString().slice(0, 7);
+
+    resumo.innerHTML = parcelas.map(p => {
+        let cls = 'badge-parcela';
+        if (p.mes_ferias < mesAtual)        cls += ' badge-parcela-passada';
+        else if (p.mes_ferias === mesAtual)  cls += ' badge-parcela-atual';
+        const dias = p.dias ? ` (${parseFloat(p.dias)}d)` : '';
+        return `<span class="${cls}">${p.mes_ferias_display}${dias}</span>`;
+    }).join('');
 }
+
 
 // ─────────────────────────────────────────────────────────────────
 // Atualiza a barra de progresso de dias no topo do modal
@@ -464,9 +478,7 @@ function atualizarBarra(parcelas, diasDireito, diasUsados) {
     if (pct < 80) prog.style.background = 'var(--primary-gradient)';
     else prog.style.background = '';
 
-    document.getElementById('label-dias').textContent =
-        `${usados}d / ${diasDireito}d`;
-
+    document.getElementById('label-dias').textContent = `${usados}d / ${diasDireito}d`;
     barra.style.display = 'block';
 }
 

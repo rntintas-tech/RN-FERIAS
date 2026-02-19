@@ -55,23 +55,30 @@ class PeriodoAquisitivo(models.Model):
     @property
     def status_limite(self):
         """
-        Retorna o status visual baseado nos prazos do período.
-        'danger'   → passou do limite máximo
-        'warning'  → limite ideal dentro de 60 dias
-        'ok'       → dentro do prazo
-        'sem_dias' → sem dias de direito
+        Status baseado no limite_maximo e nos dias agendados.
+        Badge só aparece quando os dias de direito NÃO estão totalmente agendados.
+        - 'danger'   → limite máximo em ≤ 60 dias
+        - 'warning'  → limite máximo em ≤ 90 dias
+        - 'ok'       → dentro do prazo ou férias completamente agendadas
+        - 'sem_dias' → sem dias de direito
         """
         if not self.dias_direito or self.dias_direito == 0:
             return 'sem_dias'
 
-        hoje = timezone.now().date()
+        # Se todos os dias de direito já estão agendados, não há alerta
+        dias_agendados = sum(p.dias for p in self.parcelas.all() if p.dias is not None)
+        if dias_agendados >= self.dias_direito:
+            return 'ok'
 
-        if self.limite_maximo and hoje > self.limite_maximo:
+        if not self.limite_maximo:
+            return 'ok'
+
+        dias_para_limite = (self.limite_maximo - timezone.now().date()).days
+
+        if dias_para_limite <= 60:
             return 'danger'
-
-        if self.limite_ideal:
-            if (self.limite_ideal - hoje).days <= 60:
-                return 'warning'
+        if dias_para_limite <= 90:
+            return 'warning'
 
         return 'ok'
 
@@ -79,10 +86,10 @@ class PeriodoAquisitivo(models.Model):
     def status_badge(self):
         """Retorna (classe_bootstrap, texto) para o badge de status."""
         badges = {
-            'danger':   ('bg-danger',              '⚠ URGENTE'),
-            'warning':  ('bg-warning text-dark',   '⏰ Atenção'),
-            'ok':       ('bg-success',             '✓ OK'),
-            'sem_dias': ('bg-secondary',           '— Sem dias'),
+            'danger':   ('bg-danger',             '⚠ URGENTE'),
+            'warning':  ('bg-warning text-dark',  '⏰ Atenção'),
+            'ok':       ('bg-success',            '✓ OK'),
+            'sem_dias': ('bg-secondary',          '— Sem dias'),
         }
         return badges.get(self.status_limite, ('bg-secondary', '-'))
 

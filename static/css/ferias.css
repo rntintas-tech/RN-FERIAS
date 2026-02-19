@@ -211,3 +211,20 @@
   .table-ferias           { font-size: 0.75rem; }
   .input-mes              { width: 100px; }
 }
+
+/* ---------- Badges de parcela de férias ----------
+   Cor base (azul escuro) = agendamento futuro.
+   Variações indicam o momento em relação ao mês atual.
+*/
+
+/* Mês atual: amarelo — "está acontecendo agora" */
+.badge-parcela-atual {
+  background: var(--warning-color) !important;
+  color: #1a1a1a !important;
+}
+
+/* Mês já passou: verde — férias realizadas */
+.badge-parcela-passada {
+  background: var(--success-color) !important;
+  color: var(--white) !important;
+}
