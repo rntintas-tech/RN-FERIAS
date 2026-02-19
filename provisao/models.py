@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils import timezone
-import datetime
 
 
 class Colaborador(models.Model):
@@ -23,9 +22,9 @@ class Colaborador(models.Model):
 
 class PeriodoAquisitivo(models.Model):
     """
-    Cada colaborador pode ter múltiplos períodos aquisitivos.
-    Ex: Alex pode ter o período 2024→2025 e também 2025→2026.
-    A principal funcionalidade é registrar em qual mês ele vai tirar as férias.
+    Cada colaborador pode ter múltiplos períodos aquisitivos vindos do ERP.
+    As férias agendadas ficam em ParcelaFerias (relação 1→N),
+    pois um colaborador pode fracionar as férias em vários meses.
     """
     colaborador = models.ForeignKey(
         Colaborador,
@@ -44,47 +43,23 @@ class PeriodoAquisitivo(models.Model):
     dias_restantes = models.DecimalField(max_digits=5, decimal_places=1, default=0, verbose_name='Dias Restantes')
     dias_programados = models.DecimalField(max_digits=5, decimal_places=1, default=0, verbose_name='Dias Programados')
 
-    # Campo principal: mês que o colaborador vai tirar férias (formato YYYY-MM)
-    mes_ferias = models.CharField(
-        max_length=7,
-        null=True,
-        blank=True,
-        verbose_name='Mês das Férias',
-        help_text='Formato: YYYY-MM (ex: 2025-07)'
-    )
-
-    observacao = models.TextField(blank=True, verbose_name='Observação')
-
     class Meta:
         ordering = ['colaborador__nome', 'inicio_aquisitivo']
         verbose_name = 'Período Aquisitivo'
         verbose_name_plural = 'Períodos Aquisitivos'
-        # Um colaborador não pode ter dois períodos com mesmo início
         unique_together = ['colaborador', 'inicio_aquisitivo']
 
     def __str__(self):
         return f"{self.colaborador.nome} | {self.inicio_aquisitivo} → {self.fim_aquisitivo}"
 
     @property
-    def mes_ferias_display(self):
-        """Retorna o mês de férias formatado como 'Jul/2025'."""
-        if not self.mes_ferias:
-            return '-'
-        try:
-            ano, mes = self.mes_ferias.split('-')
-            meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
-            return f"{meses[int(mes)-1]}/{ano}"
-        except:
-            return self.mes_ferias
-
-    @property
     def status_limite(self):
         """
-        Retorna o status visual baseado no limite máximo vs mês de férias.
-        'danger'  → passou ou vai passar do limite máximo
-        'warning' → próximo do limite ideal (dentro de 60 dias)
-        'ok'      → tudo certo
-        'sem_dias' → não tem dias de direito
+        Retorna o status visual baseado nos prazos do período.
+        'danger'   → passou do limite máximo
+        'warning'  → limite ideal dentro de 60 dias
+        'ok'       → dentro do prazo
+        'sem_dias' → sem dias de direito
         """
         if not self.dias_direito or self.dias_direito == 0:
             return 'sem_dias'
@@ -92,32 +67,75 @@ class PeriodoAquisitivo(models.Model):
         hoje = timezone.now().date()
 
         if self.limite_maximo and hoje > self.limite_maximo:
-            return 'danger'  # Já passou do prazo!
+            return 'danger'
 
         if self.limite_ideal:
-            delta = (self.limite_ideal - hoje).days
-            if delta <= 60:
-                return 'warning'  # Atenção: limite ideal se aproximando
+            if (self.limite_ideal - hoje).days <= 60:
+                return 'warning'
 
         return 'ok'
 
     @property
     def status_badge(self):
-        """Retorna classe Bootstrap e texto para o badge de status."""
+        """Retorna (classe_bootstrap, texto) para o badge de status."""
         badges = {
-            'danger':   ('bg-danger',   '⚠ URGENTE'),
-            'warning':  ('bg-warning text-dark', '⏰ Atenção'),
-            'ok':       ('bg-success',  '✓ OK'),
-            'sem_dias': ('bg-secondary','— Sem dias'),
+            'danger':   ('bg-danger',              '⚠ URGENTE'),
+            'warning':  ('bg-warning text-dark',   '⏰ Atenção'),
+            'ok':       ('bg-success',             '✓ OK'),
+            'sem_dias': ('bg-secondary',           '— Sem dias'),
         }
         return badges.get(self.status_limite, ('bg-secondary', '-'))
 
 
+class ParcelaFerias(models.Model):
+    """
+    Uma parcela de férias dentro de um período aquisitivo.
+    Um período pode ter múltiplas parcelas — férias fracionadas em meses diferentes.
+    Ex: 10 dias em Jul/2025 + 20 dias em Set/2025 dentro do mesmo período aquisitivo.
+    """
+    periodo = models.ForeignKey(
+        PeriodoAquisitivo,
+        on_delete=models.CASCADE,
+        related_name='parcelas',
+        verbose_name='Período'
+    )
+    mes_ferias = models.CharField(max_length=7, verbose_name='Mês das Férias',
+                                  help_text='Formato YYYY-MM (ex: 2025-07)')
+    dias = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True,
+                               verbose_name='Dias')
+    observacao = models.TextField(blank=True, verbose_name='Observação')
+
+    class Meta:
+        ordering = ['mes_ferias']
+        verbose_name = 'Parcela de Férias'
+        verbose_name_plural = 'Parcelas de Férias'
+
+    def __str__(self):
+        return f"{self.periodo} → {self.mes_ferias_display}"
+
+    @property
+    def mes_ferias_display(self):
+        """Retorna 'Jul/2025' a partir de '2025-07'."""
+        try:
+            ano, mes = self.mes_ferias.split('-')
+            nomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+            return f"{nomes[int(mes)-1]}/{ano}"
+        except Exception:
+            return self.mes_ferias
+
+    def to_dict(self):
+        """Serializa para JSON (usado nas respostas AJAX do modal)."""
+        return {
+            'id': self.id,
+            'mes_ferias': self.mes_ferias,
+            'mes_ferias_display': self.mes_ferias_display,
+            'dias': str(self.dias) if self.dias else '',
+            'observacao': self.observacao,
+        }
+
+
 class ImportacaoProvisao(models.Model):
-    """
-    Registra cada vez que uma nova provisão foi importada.
-    Serve como log do histórico de atualizações.
-    """
+    """Registra cada importação de provisão — serve como log de histórico."""
     data_importacao = models.DateTimeField(auto_now_add=True)
     total_linhas = models.IntegerField(default=0, verbose_name='Total de linhas no CSV')
     novos = models.IntegerField(default=0, verbose_name='Colaboradores novos')

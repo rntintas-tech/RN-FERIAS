@@ -1,4 +1,5 @@
 {% extends 'provisao/base.html' %}
+{% load provisao_extras %}
 
 {% block title %}Tabela de Provisão{% endblock %}
 
@@ -59,7 +60,7 @@
      ═══════════════════════════════════════════════════ -->
 <div class="rennova-card mb-3 animate-up" style="animation-delay:0.3s">
     <div class="rennova-card-body py-2">
-        <form method="get" class="d-flex align-items-center gap-2 search-bar flex-wrap">
+        <form method="get" class="d-flex align-items-center gap-2 flex-wrap">
             <div class="input-group" style="max-width:380px;">
                 <span class="input-group-text bg-white border-end-0">
                     <i class="bi bi-search text-muted"></i>
@@ -93,9 +94,7 @@
             <i class="bi bi-table"></i>
             Períodos Aquisitivos
         </span>
-        <small class="opacity-75">
-            Os meses de férias são salvos automaticamente ao selecionar
-        </small>
+        <small class="opacity-75">Clique em <strong>✏ Editar</strong> para agendar férias</small>
     </div>
 
     <div class="rennova-card-body p-0">
@@ -105,17 +104,16 @@
                     <tr>
                         <th>Código</th>
                         <th>Colaborador</th>
+                        <th>Admissão</th>
                         <th>Cargo</th>
                         <th>Início Aquisit.</th>
-                        <th>Fim Aquisit.</th>
                         <th>Limite Ideal</th>
                         <th>Limite Máximo</th>
                         <th class="text-center">Dir.</th>
                         <th class="text-center">Gozo</th>
                         <th class="text-center">Rest.</th>
-                        <th>Mês das Férias</th>
+                        <th>Férias Agendadas</th>
                         <th class="text-center">Status</th>
-                        <th>Obs.</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -126,50 +124,61 @@
 
                                 {% if forloop.first %}
                                     <td rowspan="{{ colaborador.periodos.count }}"
-                                        class="fw-semibold text-muted"
-                                        style="font-size:0.78rem;">{{ colaborador.codigo }}</td>
+                                        class="fw-semibold text-muted" style="font-size:0.78rem;">
+                                        {{ colaborador.codigo }}
+                                    </td>
                                     <td rowspan="{{ colaborador.periodos.count }}" class="fw-semibold">
                                         {{ colaborador.nome }}
                                     </td>
                                     <td rowspan="{{ colaborador.periodos.count }}"
-                                        class="text-muted" style="font-size:0.78rem;">{{ colaborador.cargo }}</td>
+                                        class="text-muted" style="font-size:0.78rem; white-space:nowrap;">
+                                        {{ colaborador.data_admissao|date:"d/m/Y"|default:"—" }}
+                                    </td>
+                                    <td rowspan="{{ colaborador.periodos.count }}"
+                                        class="text-muted" style="font-size:0.78rem;">
+                                        {{ colaborador.cargo }}
+                                    </td>
                                 {% endif %}
 
-                                <td>{{ periodo.inicio_aquisitivo|date:"d/m/Y" }}</td>
-                                <td>{{ periodo.fim_aquisitivo|date:"d/m/Y" }}</td>
+                                <td style="white-space:nowrap;">{{ periodo.inicio_aquisitivo|date:"d/m/Y" }}</td>
 
-                                <td class="{% if periodo.limite_ideal %}text-muted{% else %}text-muted{% endif %}">
-                                    {% if periodo.limite_ideal %}
-                                        {{ periodo.limite_ideal|date:"d/m/Y" }}
-                                    {% else %}—{% endif %}
+                                <td class="{% if periodo.status_limite == 'warning' or periodo.status_limite == 'danger' %}text-danger fw-semibold{% endif %}"
+                                    style="white-space:nowrap;">
+                                    {{ periodo.limite_ideal|date:"d/m/Y"|default:"—" }}
                                 </td>
 
-                                <td class="fw-semibold">
-                                    {% if periodo.limite_maximo %}
-                                        <span class="{% if periodo.status_limite == 'danger' %}text-danger{% endif %}">
-                                            {{ periodo.limite_maximo|date:"d/m/Y" }}
+                                <td class="{% if periodo.status_limite == 'danger' %}text-danger fw-semibold{% endif %}"
+                                    style="white-space:nowrap;">
+                                    {{ periodo.limite_maximo|date:"d/m/Y"|default:"—" }}
+                                </td>
+
+                                <td class="text-center">{{ periodo.dias_direito|floatformat:0 }}</td>
+                                <td class="text-center">{{ periodo.dias_gozo|floatformat:0 }}</td>
+                                <td class="text-center">{{ periodo.dias_restantes|floatformat:0 }}</td>
+
+                                <!-- Férias Agendadas: mostra resumo das parcelas + botão de edição -->
+                                <td class="cell-ferias"
+                                    id="cell-ferias-{{ periodo.id }}"
+                                    data-periodo-id="{{ periodo.id }}"
+                                    data-nome="{{ colaborador.nome }}"
+                                    data-periodo-label="{{ periodo.inicio_aquisitivo|date:'d/m/Y' }} → {{ periodo.fim_aquisitivo|date:'d/m/Y' }}"
+                                    data-dias-direito="{{ periodo.dias_direito|floatformat:0 }}"
+                                    data-parcelas='{{ periodo.parcelas.all|jsonparcelas }}'>
+
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="parcelas-resumo" id="resumo-{{ periodo.id }}">
+                                            {% for parcela in periodo.parcelas.all %}
+                                                <span class="badge-parcela">
+                                                    {{ parcela.mes_ferias_display }}{% if parcela.dias %} ({{ parcela.dias|floatformat:0 }}d){% endif %}
+                                                </span>
+                                            {% empty %}
+                                                <span class="text-muted" style="font-size:0.78rem;">—</span>
+                                            {% endfor %}
                                         </span>
-                                    {% else %}—{% endif %}
-                                </td>
-
-                                <td class="text-center">{{ periodo.dias_direito }}</td>
-                                <td class="text-center">{{ periodo.dias_gozo }}</td>
-                                <td class="text-center">
-                                    <span class="fw-semibold {% if periodo.dias_restantes > 0 %}text-primary{% endif %}">
-                                        {{ periodo.dias_restantes }}
-                                    </span>
-                                </td>
-
-                                <!-- Seletor de mês -->
-                                <td>
-                                    <div class="d-flex align-items-center gap-1">
-                                        <input type="month"
-                                               class="input-mes"
-                                               data-periodo-id="{{ periodo.id }}"
-                                               value="{{ periodo.mes_ferias|default:'' }}"
-                                               title="Clique para definir o mês das férias">
-                                        <span class="badge bg-success badge-salvo"
-                                              id="salvo-{{ periodo.id }}">✓</span>
+                                        <button class="btn btn-editar-ferias btn-sm"
+                                                onclick="abrirModal({{ periodo.id }})">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </button>
                                     </div>
                                 </td>
 
@@ -180,29 +189,20 @@
                                     </span>
                                 </td>
 
-                                <!-- Observação -->
-                                <td>
-                                    <input type="text"
-                                           class="input-mes input-obs"
-                                           data-periodo-id="{{ periodo.id }}"
-                                           value="{{ periodo.observacao }}"
-                                           placeholder="Obs..."
-                                           title="Observação">
-                                </td>
-
                             </tr>
                             {% endwith %}
                         {% empty %}
                             <tr>
                                 <td>{{ colaborador.codigo }}</td>
                                 <td class="fw-semibold">{{ colaborador.nome }}</td>
+                                <td>{{ colaborador.data_admissao|date:"d/m/Y"|default:"—" }}</td>
                                 <td>{{ colaborador.cargo }}</td>
-                                <td colspan="10" class="text-muted text-center">Sem períodos aquisitivos</td>
+                                <td colspan="8" class="text-muted text-center">Sem períodos aquisitivos</td>
                             </tr>
                         {% endfor %}
                     {% empty %}
                         <tr>
-                            <td colspan="13">
+                            <td colspan="12">
                                 <div class="empty-state">
                                     <i class="bi bi-inbox"></i>
                                     <p class="mb-2 fw-semibold">Nenhum colaborador encontrado</p>
@@ -226,82 +226,312 @@
     <span><span class="badge bg-success">✓ OK</span> — dentro do prazo</span>
 </div>
 
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL DE FÉRIAS
+     Abre ao clicar no botão ✏ de qualquer período.
+     Permite adicionar e remover parcelas de férias.
+     ═══════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalFerias" tabindex="-1" aria-labelledby="modalFeriasLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:var(--border-radius-lg); border:none;">
+
+            <div class="modal-header" style="background:var(--primary-gradient); color:white; border-radius:var(--border-radius-lg) var(--border-radius-lg) 0 0;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="modalFeriasLabel">
+                        <i class="bi bi-calendar2-check me-2"></i>Férias Agendadas
+                    </h5>
+                    <small id="modal-subtitulo" class="opacity-75"></small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body px-4 pt-3 pb-2">
+
+                <!-- Barra de uso de dias — só aparece quando há dias informados -->
+                <div id="barra-dias" class="mb-3" style="display:none;">
+                    <div class="d-flex justify-content-between mb-1" style="font-size:0.78rem; color:var(--text-muted);">
+                        <span>Dias agendados</span>
+                        <span id="label-dias"></span>
+                    </div>
+                    <div class="progress" style="height:8px; border-radius:var(--border-radius-pill);">
+                        <div id="barra-prog" class="progress-bar" role="progressbar" style="width:0%; background:var(--primary-gradient);"></div>
+                    </div>
+                </div>
+
+                <!-- Lista de parcelas existentes -->
+                <div id="lista-parcelas">
+                    <!-- preenchido por renderizarParcelas() -->
+                </div>
+
+                <hr class="my-3">
+
+                <!-- Formulário para adicionar nova parcela -->
+                <p class="fw-semibold mb-2" style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">
+                    Adicionar parcela
+                </p>
+                <div class="row g-2 align-items-end">
+                    <div class="col-5">
+                        <label class="form-label mb-1" style="font-size:0.78rem;">Mês</label>
+                        <input type="month" id="nova-mes" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-3">
+                        <label class="form-label mb-1" style="font-size:0.78rem;">Dias <span class="text-muted">(opc.)</span></label>
+                        <input type="number" id="nova-dias" class="form-control form-control-sm"
+                               placeholder="ex: 15" min="1" max="30" step="0.5">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label mb-1" style="font-size:0.78rem;">Obs. <span class="text-muted">(opc.)</span></label>
+                        <input type="text" id="nova-obs" class="form-control form-control-sm" placeholder="Nota...">
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-sm w-100 mt-1"
+                                style="background:var(--primary-gradient); color:white; border:none; border-radius:var(--border-radius-md);"
+                                onclick="adicionarParcela()">
+                            <i class="bi bi-plus-circle me-1"></i> Adicionar
+                        </button>
+                        <div id="erro-modal" class="text-danger mt-1" style="font-size:0.8rem;display:none;"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_css %}
+<style>
+    /* Badges de parcela na célula da tabela */
+    .badge-parcela {
+        display: inline-block;
+        background: var(--primary-color);
+        color: white;
+        font-size: 0.73rem;
+        font-weight: 500;
+        padding: 2px 7px;
+        border-radius: var(--border-radius-pill);
+        margin: 1px 2px;
+        white-space: nowrap;
+    }
+
+    /* Botão de edição discreto */
+    .btn-editar-ferias {
+        background: transparent;
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        padding: 1px 7px;
+        font-size: 0.72rem;
+        border-radius: var(--border-radius-md);
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+    }
+    .btn-editar-ferias:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    /* Célula de férias: min-width para não ficar espremida */
+    .cell-ferias { min-width: 160px; }
+</style>
 {% endblock %}
 
 
 {% block extra_js %}
 <script>
 // ─────────────────────────────────────────────────────────────────
-// Salva mês de férias via AJAX ao mudar o input[type=month]
+// Estado do modal: qual período está sendo editado
 // ─────────────────────────────────────────────────────────────────
-document.querySelectorAll('input[type=month]').forEach(input => {
-    input.addEventListener('change', function () {
-        const periodoId = this.dataset.periodoId;
-        const mesFrias  = this.value;
+let periodoAtivo = null;
 
-        fetch("{% url 'salvar_mes_ferias' %}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-            body: JSON.stringify({ periodo_id: periodoId, mes_ferias: mesFrias }),
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.ok) {
-                const badge = document.getElementById('salvo-' + periodoId);
-                badge.classList.add('show');
-                // Pisca levemente a linha para feedback visual
-                const row = this.closest('tr');
-                row.style.transition = 'background-color 0.3s';
-                row.style.backgroundColor = '#e8f5e9';
-                setTimeout(() => {
-                    badge.classList.remove('show');
-                    row.style.backgroundColor = '';
-                }, 2000);
-            } else {
-                alert('Erro ao salvar: ' + data.erro);
-            }
-        })
-        .catch(() => alert('Erro de conexão ao salvar.'));
-    });
-});
+const modalBS = new bootstrap.Modal(document.getElementById('modalFerias'));
 
-// ─────────────────────────────────────────────────────────────────
-// Salva observação ao perder o foco (só se mudou)
-// ─────────────────────────────────────────────────────────────────
-document.querySelectorAll('.input-obs').forEach(input => {
-    input.dataset.original = input.value;
-
-    input.addEventListener('blur', function () {
-        if (this.value === this.dataset.original) return;
-
-        const periodoId = this.dataset.periodoId;
-        fetch("{% url 'salvar_observacao' %}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-            body: JSON.stringify({ periodo_id: periodoId, observacao: this.value }),
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.ok) {
-                this.dataset.original = this.value;
-                // Pulso sutil de confirmação
-                this.style.borderColor = '#28a745';
-                setTimeout(() => { this.style.borderColor = ''; }, 1500);
-            }
-        });
-    });
-});
-
-// Lê cookie CSRF do Django
 function getCookie(name) {
-    const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
-    return v ? v[2] : null;
+    const val = `; ${document.cookie}`;
+    const parts = val.split(`; ${name}=`);
+    return parts.length === 2 ? parts.pop().split(';').shift() : '';
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// Abre o modal carregando as parcelas do data-attribute da célula
+// (sem AJAX extra — os dados já vieram no HTML)
+// ─────────────────────────────────────────────────────────────────
+function abrirModal(periodoId) {
+    const cell = document.getElementById('cell-ferias-' + periodoId);
+    periodoAtivo = periodoId;
+
+    document.getElementById('modal-subtitulo').textContent =
+        cell.dataset.nome + ' · ' + cell.dataset.periodoLabel;
+
+    // Lê parcelas do data-attribute (JSON embutido no template)
+    let parcelas = [];
+    try { parcelas = JSON.parse(cell.dataset.parcelas || '[]'); } catch(e) {}
+
+    const diasDireito = parseFloat(cell.dataset.diasDireito || 0);
+    renderizarParcelas(parcelas);
+    atualizarBarra(parcelas, diasDireito);
+
+    // Limpa o formulário de adição
+    document.getElementById('nova-mes').value  = '';
+    document.getElementById('nova-dias').value = '';
+    document.getElementById('nova-obs').value  = '';
+    document.getElementById('erro-modal').style.display = 'none';
+
+    modalBS.show();
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// Renderiza a lista de parcelas dentro do modal
+// ─────────────────────────────────────────────────────────────────
+function renderizarParcelas(parcelas) {
+    const container = document.getElementById('lista-parcelas');
+
+    if (!parcelas.length) {
+        container.innerHTML = `<p class="text-muted text-center py-2" style="font-size:0.85rem;">
+            <i class="bi bi-calendar-x me-1"></i>Nenhuma férias agendada ainda.
+        </p>`;
+        return;
+    }
+
+    const linhas = parcelas.map(p => `
+        <div class="d-flex align-items-center justify-content-between py-1 px-2
+                    border-bottom" style="font-size:0.85rem;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge-parcela">${p.mes_ferias_display}</span>
+                ${p.dias ? `<span class="text-muted">${p.dias}d</span>` : ''}
+                ${p.observacao ? `<span class="text-muted fst-italic">${p.observacao}</span>` : ''}
+            </div>
+            <button class="btn btn-sm btn-outline-danger" style="padding:1px 8px;font-size:0.75rem;"
+                    onclick="deletarParcela(${p.id})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `).join('');
+
+    container.innerHTML = linhas;
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// Atualiza tanto o modal quanto a célula na tabela após qualquer
+// mudança (adição ou remoção de parcela)
+// ─────────────────────────────────────────────────────────────────
+function atualizarUI(periodoId, parcelas, diasUsados, diasDireito) {
+    // Atualiza modal
+    renderizarParcelas(parcelas);
+    atualizarBarra(parcelas, diasDireito, diasUsados);
+
+    // Atualiza data-attribute da célula (para reaberturas futuras do modal)
+    const cell = document.getElementById('cell-ferias-' + periodoId);
+    cell.dataset.parcelas = JSON.stringify(parcelas);
+
+    // Atualiza o resumo na célula da tabela
+    const resumo = document.getElementById('resumo-' + periodoId);
+    if (!parcelas.length) {
+        resumo.innerHTML = `<span class="text-muted" style="font-size:0.78rem;">—</span>`;
+        return;
+    }
+    resumo.innerHTML = parcelas.map(p =>
+        `<span class="badge-parcela">${p.mes_ferias_display}${p.dias ? ' (' + parseFloat(p.dias) + 'd)' : ''}</span>`
+    ).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Atualiza a barra de progresso de dias no topo do modal
+// ─────────────────────────────────────────────────────────────────
+function atualizarBarra(parcelas, diasDireito, diasUsados) {
+    const barra = document.getElementById('barra-dias');
+    if (!diasDireito) { barra.style.display = 'none'; return; }
+
+    // Se diasUsados não foi passado (abertura inicial), calcula do JSON
+    const usados = (diasUsados !== undefined)
+        ? diasUsados
+        : parcelas.reduce((acc, p) => acc + (p.dias ? parseFloat(p.dias) : 0), 0);
+
+    const pct = Math.min(100, Math.round((usados / diasDireito) * 100));
+    const prog = document.getElementById('barra-prog');
+    prog.style.width = pct + '%';
+    prog.className = 'progress-bar' + (pct >= 100 ? ' bg-danger' : pct >= 80 ? ' bg-warning' : '');
+    if (pct < 80) prog.style.background = 'var(--primary-gradient)';
+    else prog.style.background = '';
+
+    document.getElementById('label-dias').textContent =
+        `${usados}d / ${diasDireito}d`;
+
+    barra.style.display = 'block';
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// Envia nova parcela para o servidor
+// ─────────────────────────────────────────────────────────────────
+function adicionarParcela() {
+    const mes  = document.getElementById('nova-mes').value;
+    const dias = document.getElementById('nova-dias').value;
+    const obs  = document.getElementById('nova-obs').value;
+    const erroEl = document.getElementById('erro-modal');
+
+    if (!mes) {
+        erroEl.textContent = 'Informe o mês.';
+        erroEl.style.display = 'block';
+        return;
+    }
+    erroEl.style.display = 'none';
+
+    fetch("{% url 'salvar_parcela' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ periodo_id: periodoAtivo, mes_ferias: mes, dias: dias, observacao: obs }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            const cell = document.getElementById('cell-ferias-' + periodoAtivo);
+            atualizarUI(periodoAtivo, data.parcelas, data.dias_usados, parseFloat(cell.dataset.diasDireito || 0));
+            document.getElementById('nova-mes').value  = '';
+            document.getElementById('nova-dias').value = '';
+            document.getElementById('nova-obs').value  = '';
+        } else {
+            erroEl.textContent = data.erro || 'Erro ao salvar.';
+            erroEl.style.display = 'block';
+        }
+    })
+    .catch(() => {
+        erroEl.textContent = 'Erro de conexão.';
+        erroEl.style.display = 'block';
+    });
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// Remove uma parcela
+// ─────────────────────────────────────────────────────────────────
+function deletarParcela(parcelaId) {
+    if (!confirm('Remover esta parcela?')) return;
+
+    fetch("{% url 'deletar_parcela' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ parcela_id: parcelaId }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            const cell = document.getElementById('cell-ferias-' + periodoAtivo);
+            atualizarUI(periodoAtivo, data.parcelas, data.dias_usados, parseFloat(cell.dataset.diasDireito || 0));
+        } else {
+            alert('Erro: ' + (data.erro || 'Falha ao remover.'));
+        }
+    });
 }
 </script>
 {% endblock %}

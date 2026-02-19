@@ -4,47 +4,38 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db import transaction
 import json
+from decimal import Decimal, InvalidOperation
 
-from .models import Colaborador, PeriodoAquisitivo, ImportacaoProvisao
+from .models import Colaborador, PeriodoAquisitivo, ParcelaFerias, ImportacaoProvisao
 from .utils import processar_csv, analisar_importacao
 
 
 def index(request):
-    """Tela principal: tabela de colaboradores com seus períodos e mês de férias."""
+    """Tela principal: tabela de colaboradores com seus períodos e parcelas de férias."""
     colaboradores = (
         Colaborador.objects
         .filter(ativo=True)
-        .prefetch_related('periodos')
+        .prefetch_related('periodos__parcelas')
         .order_by('nome')
     )
 
-    # Filtro por nome/cargo (busca simples)
     busca = request.GET.get('busca', '').strip()
     if busca:
         colaboradores = colaboradores.filter(nome__icontains=busca) | \
                         colaboradores.filter(cargo__icontains=busca)
 
-    # Estatísticas rápidas para o topo
     total = colaboradores.count()
-    urgentes = sum(
-        1 for c in colaboradores
-        for p in c.periodos.all()
-        if p.status_limite == 'danger'
-    )
-    atencao = sum(
-        1 for c in colaboradores
-        for p in c.periodos.all()
-        if p.status_limite == 'warning'
-    )
+    urgentes = sum(1 for c in colaboradores for p in c.periodos.all() if p.status_limite == 'danger')
+    atencao  = sum(1 for c in colaboradores for p in c.periodos.all() if p.status_limite == 'warning')
 
     ultima_importacao = ImportacaoProvisao.objects.first()
 
     return render(request, 'provisao/index.html', {
-        'colaboradores': colaboradores,
-        'busca': busca,
-        'total': total,
-        'urgentes': urgentes,
-        'atencao': atencao,
+        'colaboradores':    colaboradores,
+        'busca':            busca,
+        'total':            total,
+        'urgentes':         urgentes,
+        'atencao':          atencao,
         'ultima_importacao': ultima_importacao,
     })
 
@@ -54,13 +45,11 @@ def importar(request):
     if request.method == 'GET':
         return render(request, 'provisao/importar.html')
 
-    # POST: recebeu o CSV
-    arquivo = request.FILES.get('arquivo')
+    arquivo  = request.FILES.get('arquivo')
     texto_csv = request.POST.get('texto_csv', '').strip()
 
-    # Aceita upload de arquivo OU colar o texto diretamente
     if arquivo:
-        conteudo = arquivo.read().decode('utf-8-sig', errors='replace')  # utf-8-sig remove BOM
+        conteudo = arquivo.read().decode('utf-8-sig', errors='replace')
     elif texto_csv:
         conteudo = texto_csv
     else:
@@ -78,57 +67,27 @@ def importar(request):
         return redirect('importar')
 
     analise = analisar_importacao(linhas)
-
-    # Salva os dados na sessão para confirmar depois
-    # (evita reprocessar o arquivo no passo de confirmação)
-    request.session['linhas_csv'] = [
-        {**l, 'inicio_aquisitivo': str(l['inicio_aquisitivo']),
-               'fim_aquisitivo': str(l['fim_aquisitivo']),
-               'limite_ideal': str(l['limite_ideal']) if l['limite_ideal'] else None,
-               'limite_maximo': str(l['limite_maximo']) if l['limite_maximo'] else None,
-               'data_admissao': str(l['data_admissao']) if l['data_admissao'] else None,
-               'faltas': str(l['faltas']),
-               'dias_direito': str(l['dias_direito']),
-               'dias_gozo': str(l['dias_gozo']),
-               'dias_restantes': str(l['dias_restantes']),
-               'dias_programados': str(l['dias_programados']),
-        }
-        for l in linhas
-    ]
-
-    # Nomes dos colaboradores novos e removidos para exibição
-    novos_nomes = [l['nome'] for l in linhas if l['codigo'] in analise['novos']]
-    novos_nomes = list(dict.fromkeys(novos_nomes))  # deduplica mantendo ordem
-
-    removidos_objs = Colaborador.objects.filter(
-        codigo__in=analise['removidos'], ativo=True
-    ).values('codigo', 'nome')
+    request.session['linhas_csv'] = linhas
 
     return render(request, 'provisao/confirmar_importacao.html', {
-        'total_linhas': len(linhas),
-        'novos': list(analise['novos']),
-        'novos_nomes': novos_nomes,
-        'removidos': list(analise['removidos']),
-        'removidos_objs': list(removidos_objs),
-        'existentes_count': len(analise['existentes']),
+        'linhas':         linhas,
+        'novos':          analise['novos'],
+        'removidos':      analise['removidos'],
+        'novos_nomes':    analise['novos_nomes'],
+        'removidos_objs': analise['removidos_objs'],
     })
 
 
 @require_POST
 def confirmar_importacao(request):
-    """
-    Executa a importação de fato:
-    - Atualiza períodos dos colaboradores existentes
-    - Adiciona novos colaboradores (se solicitado)
-    - Inativa removidos (se solicitado)
-    """
+    """Processa a importação confirmada pelo usuário."""
     linhas = request.session.get('linhas_csv')
     if not linhas:
         messages.error(request, 'Sessão expirada. Faça o upload novamente.')
         return redirect('importar')
 
-    adicionar_novos  = request.POST.get('adicionar_novos') == '1'
-    remover_antigos  = request.POST.get('remover_antigos') == '1'
+    adicionar_novos = request.POST.get('adicionar_novos') == '1'
+    remover_antigos = request.POST.get('remover_antigos') == '1'
 
     from datetime import date
 
@@ -137,8 +96,6 @@ def confirmar_importacao(request):
             return None
         return date.fromisoformat(s)
 
-    from decimal import Decimal
-
     novos_count = removidos_count = atualizados_count = 0
 
     with transaction.atomic():
@@ -146,7 +103,6 @@ def confirmar_importacao(request):
             inicio_aq = str_para_date(l['inicio_aquisitivo'])
             fim_aq    = str_para_date(l['fim_aquisitivo'])
 
-            # Garante que o colaborador existe
             colaborador, criado = Colaborador.objects.get_or_create(
                 codigo=l['codigo'],
                 defaults={
@@ -160,20 +116,18 @@ def confirmar_importacao(request):
 
             if criado:
                 if not adicionar_novos:
-                    # Criou mas não deveria — desfaz parcialmente marcando inativo
                     colaborador.ativo = False
                     colaborador.save()
                     continue
                 novos_count += 1
             else:
-                # Atualiza dados cadastrais (cargo pode mudar)
-                colaborador.nome   = l['nome']
-                colaborador.cargo  = l['cargo']
-                colaborador.ativo  = True
+                colaborador.nome  = l['nome']
+                colaborador.cargo = l['cargo']
+                colaborador.ativo = True
                 colaborador.save()
 
-            # Atualiza ou cria o período aquisitivo
-            # Preserva o mes_ferias e observacao que já foram preenchidos manualmente!
+            # Preserva parcelas de férias: get_or_create garante que registros
+            # existentes (com parcelas vinculadas) não sejam recriados
             periodo, periodo_criado = PeriodoAquisitivo.objects.get_or_create(
                 colaborador=colaborador,
                 inicio_aquisitivo=inicio_aq,
@@ -190,7 +144,7 @@ def confirmar_importacao(request):
             )
 
             if not periodo_criado:
-                # Atualiza apenas os dados numéricos — preserva mes_ferias e observacao!
+                # Atualiza apenas dados do ERP — parcelas de férias são preservadas
                 periodo.fim_aquisitivo   = fim_aq
                 periodo.limite_ideal     = str_para_date(l['limite_ideal'])
                 periodo.limite_maximo    = str_para_date(l['limite_maximo'])
@@ -202,14 +156,12 @@ def confirmar_importacao(request):
                 periodo.save()
                 atualizados_count += 1
 
-        # Remove colaboradores que saíram da provisão
         if remover_antigos:
             codigos_csv = set(l['codigo'] for l in linhas)
             removidos = Colaborador.objects.filter(ativo=True).exclude(codigo__in=codigos_csv)
             removidos_count = removidos.count()
             removidos.update(ativo=False)
 
-    # Registra no log
     ImportacaoProvisao.objects.create(
         total_linhas=len(linhas),
         novos=novos_count,
@@ -228,43 +180,80 @@ def confirmar_importacao(request):
 
 
 @require_POST
-def salvar_mes_ferias(request):
+def salvar_parcela(request):
     """
-    Salva o mês de férias de um período via AJAX.
-    Espera JSON: { "periodo_id": 1, "mes_ferias": "2025-07" }
+    Cria uma nova parcela de férias para um período.
+    Espera JSON: { periodo_id, mes_ferias, dias (opcional), observacao }
+    Retorna a lista atualizada de parcelas do período.
     """
     try:
         data = json.loads(request.body)
-        periodo_id = data.get('periodo_id')
-        mes_ferias = data.get('mes_ferias', '').strip()
+        periodo = get_object_or_404(PeriodoAquisitivo, pk=data['periodo_id'])
 
-        periodo = get_object_or_404(PeriodoAquisitivo, pk=periodo_id)
+        mes = data.get('mes_ferias', '').strip()
+        if not mes or len(mes) != 7 or mes[4] != '-':
+            return JsonResponse({'ok': False, 'erro': 'Mês inválido. Use o formato YYYY-MM.'}, status=400)
 
-        # Valida formato YYYY-MM
-        if mes_ferias and len(mes_ferias) == 7 and mes_ferias[4] == '-':
-            periodo.mes_ferias = mes_ferias
-        elif mes_ferias == '':
-            periodo.mes_ferias = None
-        else:
-            return JsonResponse({'ok': False, 'erro': 'Formato inválido'}, status=400)
+        dias_raw = data.get('dias', '').strip() if data.get('dias') else None
+        dias = None
+        if dias_raw:
+            try:
+                dias = Decimal(dias_raw)
+            except InvalidOperation:
+                return JsonResponse({'ok': False, 'erro': 'Dias inválido.'}, status=400)
 
-        periodo.save()
+        # Valida o limite de dias apenas quando o campo dias é informado
+        if dias is not None and periodo.dias_direito:
+            ja_usados = sum(p.dias for p in periodo.parcelas.all() if p.dias is not None)
+            if ja_usados + dias > periodo.dias_direito:
+                disponiveis = periodo.dias_direito - ja_usados
+                return JsonResponse({
+                    'ok': False,
+                    'erro': f'Limite excedido. Disponível: {int(disponiveis)}d de {int(periodo.dias_direito)}d ({int(ja_usados)}d já usados).'
+                }, status=400)
+
+        ParcelaFerias.objects.create(
+            periodo=periodo,
+            mes_ferias=mes,
+            dias=dias,
+            observacao=data.get('observacao', '').strip(),
+        )
+
+        parcelas = list(periodo.parcelas.all().order_by('mes_ferias'))
+        dias_usados = sum(p.dias for p in parcelas if p.dias is not None)
         return JsonResponse({
             'ok': True,
-            'display': periodo.mes_ferias_display,
+            'parcelas': [p.to_dict() for p in parcelas],
+            'dias_usados': float(dias_usados),
+            'dias_direito': float(periodo.dias_direito or 0),
         })
+
     except Exception as e:
         return JsonResponse({'ok': False, 'erro': str(e)}, status=500)
 
 
 @require_POST
-def salvar_observacao(request):
-    """Salva observação de um período via AJAX."""
+def deletar_parcela(request):
+    """
+    Remove uma parcela de férias.
+    Espera JSON: { parcela_id }
+    Retorna a lista atualizada de parcelas do período.
+    """
     try:
         data = json.loads(request.body)
-        periodo = get_object_or_404(PeriodoAquisitivo, pk=data['periodo_id'])
-        periodo.observacao = data.get('observacao', '')
-        periodo.save()
-        return JsonResponse({'ok': True})
+        parcela = get_object_or_404(ParcelaFerias, pk=data['parcela_id'])
+        periodo_id = parcela.periodo_id
+        parcela.delete()
+
+        periodo = get_object_or_404(PeriodoAquisitivo, pk=periodo_id)
+        parcelas = list(ParcelaFerias.objects.filter(periodo_id=periodo_id).order_by('mes_ferias'))
+        dias_usados = sum(p.dias for p in parcelas if p.dias is not None)
+        return JsonResponse({
+            'ok': True,
+            'parcelas': [p.to_dict() for p in parcelas],
+            'dias_usados': float(dias_usados),
+            'dias_direito': float(periodo.dias_direito or 0),
+        })
+
     except Exception as e:
         return JsonResponse({'ok': False, 'erro': str(e)}, status=500)
