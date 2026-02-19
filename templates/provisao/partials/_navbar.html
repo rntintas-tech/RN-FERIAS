@@ -1,0 +1,78 @@
+{% load static %}
+
+<nav class="navbar navbar-expand-lg bg-white navbar-rn-white shadow-sm">
+    <div class="container-fluid px-4">
+
+        <!-- Logo RN Tintas + nome do sistema -->
+        <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'index' %}">
+            <img
+                src="{% static 'assets/img/RN-LOGO-INSTITUCIONAL.png' %}"
+                alt="RN Tintas"
+                style="height:38px;"
+                onerror="this.style.display='none';"
+            >
+            <div class="d-flex flex-column lh-1 ms-1">
+                <span class="fw-bold" style="font-size:0.95rem;color:var(--text-color);">
+                    Provisão de Férias
+                </span>
+                <span style="font-size:0.65rem;color:var(--text-muted);letter-spacing:0.8px;">
+                    RN TINTAS
+                </span>
+            </div>
+        </a>
+
+        <!-- Toggler mobile -->
+        <button class="navbar-toggler border-0" type="button"
+                data-bs-toggle="collapse" data-bs-target="#navbarFerias"
+                aria-controls="navbarFerias" aria-expanded="false" aria-label="Menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarFerias">
+
+            <!-- Links de navegação -->
+            <ul class="navbar-nav ms-4 me-auto gap-1">
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-1
+                               {% if request.resolver_match.url_name == 'index' %}active fw-semibold{% endif %}"
+                       href="{% url 'index' %}">
+                        <i class="bi bi-table"></i> Tabela
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-1
+                               {% if 'importar' in request.resolver_match.url_name %}active fw-semibold{% endif %}"
+                       href="{% url 'importar' %}">
+                        <i class="bi bi-cloud-upload-fill"></i> Importar Provisão
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Usuário logado -->
+            <div class="d-flex align-items-center gap-3 mt-2 mt-lg-0">
+                {% if request.user.is_authenticated %}
+                    <span class="d-flex align-items-center gap-2 text-muted" style="font-size:0.85rem;">
+                        <span class="rounded-circle d-flex align-items-center justify-content-center"
+                              style="width:30px;height:30px;background:var(--light-bg);border:1.5px solid var(--border-color);">
+                            <i class="bi bi-person-fill" style="color:var(--primary-color);font-size:0.9rem;"></i>
+                        </span>
+                        <span class="d-none d-md-inline">
+                            {{ request.user.get_full_name|default:request.user.username }}
+                        </span>
+                    </span>
+                    <a href="{% url 'logout' %}"
+                       class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span class="d-none d-md-inline">Sair</span>
+                    </a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-sm"
+                       style="background:var(--primary-gradient);color:white;border:none;">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Entrar
+                    </a>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,67 @@
+{% load static %}
+
+
+{% if messages %}
+<div class="position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index:1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center border-0 mb-2
+                {% if message.tags == 'success' %}text-bg-success
+                {% elif message.tags == 'error' or message.tags == 'danger' %}text-bg-danger
+                {% elif message.tags == 'warning' %}text-bg-warning text-dark
+                {% elif message.tags == 'info' %}text-bg-info
+                {% else %}text-bg-secondary{% endif %}"
+         role="alert" data-bs-delay="5000">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center gap-2">
+                {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="bi bi-x-octagon-fill"></i>
+                {% elif message.tags == 'warning' %}<i class="bi bi-exclamation-triangle-fill"></i>
+                {% else %}<i class="bi bi-info-circle-fill"></i>{% endif %}
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    data-bs-dismiss="toast" aria-label="Fechar"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Container para toasts disparados via JavaScript (ações AJAX do modal) -->
+<div id="toast-container-ajax"
+     class="position-fixed top-0 start-50 translate-middle-x mt-3"
+     style="z-index:1055;min-width:300px;"></div>
+
+<script>
+    /** Dispara um toast dinamicamente. Usado pelas ações AJAX do modal. */
+    function showToast(mensagem, tipo = 'success') {
+        const mapa = {
+            success: { cls: 'text-bg-success',           icone: 'bi-check-circle-fill' },
+            danger:  { cls: 'text-bg-danger',            icone: 'bi-x-octagon-fill' },
+            warning: { cls: 'text-bg-warning text-dark', icone: 'bi-exclamation-triangle-fill' },
+            info:    { cls: 'text-bg-info',              icone: 'bi-info-circle-fill' },
+        };
+        const { cls, icone } = mapa[tipo] || mapa.info;
+
+        const div = document.createElement('div');
+        div.className = `toast align-items-center border-0 mb-2 ${cls}`;
+        div.setAttribute('role', 'alert');
+        div.setAttribute('data-bs-delay', '4000');
+        div.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2">
+                    <i class="bi ${icone}"></i>${mensagem}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast" aria-label="Fechar"></button>
+            </div>`;
+
+        document.getElementById('toast-container-ajax').appendChild(div);
+        new bootstrap.Toast(div).show();
+        div.addEventListener('hidden.bs.toast', () => div.remove());
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.toast').forEach(el => new bootstrap.Toast(el).show());
+    });
+</script>

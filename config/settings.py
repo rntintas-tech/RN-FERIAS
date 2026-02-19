@@ -73,3 +73,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Autenticação
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'        # redireciona para a tabela principal após login
+LOGOUT_REDIRECT_URL = '/login/'

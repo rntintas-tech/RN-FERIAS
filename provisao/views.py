@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
@@ -9,7 +10,7 @@ from decimal import Decimal, InvalidOperation
 from .models import Colaborador, PeriodoAquisitivo, ParcelaFerias, ImportacaoProvisao
 from .utils import processar_csv, analisar_importacao
 
-
+@login_required
 def index(request):
     """Tela principal: tabela de colaboradores com seus períodos e parcelas de férias."""
     colaboradores = (
@@ -40,6 +41,7 @@ def index(request):
     })
 
 
+@login_required
 def importar(request):
     """Tela de importação: faz upload do CSV e mostra análise antes de confirmar."""
     if request.method == 'GET':
@@ -78,6 +80,7 @@ def importar(request):
     })
 
 
+@login_required
 @require_POST
 def confirmar_importacao(request):
     """Processa a importação confirmada pelo usuário."""
@@ -179,6 +182,7 @@ def confirmar_importacao(request):
     return redirect('index')
 
 
+@login_required
 @require_POST
 def salvar_parcela(request):
     """
@@ -222,16 +226,19 @@ def salvar_parcela(request):
         parcelas = list(periodo.parcelas.all().order_by('mes_ferias'))
         dias_usados = sum(p.dias for p in parcelas if p.dias is not None)
         return JsonResponse({
-            'ok': True,
-            'parcelas': [p.to_dict() for p in parcelas],
-            'dias_usados': float(dias_usados),
-            'dias_direito': float(periodo.dias_direito or 0),
+            'ok':            True,
+            'parcelas':      [p.to_dict() for p in parcelas],
+            'dias_usados':   float(dias_usados),
+            'dias_direito':  float(periodo.dias_direito or 0),
+            'status_badge':  list(periodo.status_badge),   # ['bg-danger', '⚠ URGENTE']
+            'status_limite': periodo.status_limite,        # 'danger' | 'warning' | 'ok'
         })
 
     except Exception as e:
         return JsonResponse({'ok': False, 'erro': str(e)}, status=500)
 
 
+@login_required
 @require_POST
 def deletar_parcela(request):
     """
@@ -249,10 +256,12 @@ def deletar_parcela(request):
         parcelas = list(ParcelaFerias.objects.filter(periodo_id=periodo_id).order_by('mes_ferias'))
         dias_usados = sum(p.dias for p in parcelas if p.dias is not None)
         return JsonResponse({
-            'ok': True,
-            'parcelas': [p.to_dict() for p in parcelas],
-            'dias_usados': float(dias_usados),
-            'dias_direito': float(periodo.dias_direito or 0),
+            'ok':            True,
+            'parcelas':      [p.to_dict() for p in parcelas],
+            'dias_usados':   float(dias_usados),
+            'dias_direito':  float(periodo.dias_direito or 0),
+            'status_badge':  list(periodo.status_badge),   # ['bg-danger', '⚠ URGENTE']
+            'status_limite': periodo.status_limite,        # 'danger' | 'warning' | 'ok'
         })
 
     except Exception as e:

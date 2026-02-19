@@ -6,75 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Provisão de Férias{% endblock %} | RN Tintas</title>
 
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Design System RennovaApp -->
     <link rel="stylesheet" href="{% static 'css/variables.css' %}">
     <link rel="stylesheet" href="{% static 'css/components.css' %}">
     <link rel="stylesheet" href="{% static 'css/utilities.css' %}">
-
-    <!-- Estilos do App de Férias -->
     <link rel="stylesheet" href="{% static 'css/ferias.css' %}">
-
-    <style>
-        body {
-            background-color: var(--light-bg);
-            font-family: 'Inter', var(--font-family-base);
-            color: var(--text-color);
-        }
-        /* Pequeno ajuste: remove o hover lift dos cards de stat para não atrapalhar */
-        .stat-card.rennova-card:hover { transform: translateY(-3px); }
-    </style>
 
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100" style="background-color:var(--light-bg);font-family:'Inter',var(--font-family-base);">
 
-<!-- ───────── Navbar ───────── -->
-<nav class="navbar navbar-dark navbar-rn mb-0">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'index' %}">
-            <i class="bi bi-calendar-check-fill"></i>
-            Provisão de Férias
-            <span class="badge bg-white text-danger ms-1" style="font-size:0.65rem;font-weight:700;letter-spacing:0.5px;">RN TINTAS</span>
-        </a>
-        <div class="d-flex gap-2">
-            <a href="{% url 'index' %}" class="btn btn-outline-light btn-sm d-flex align-items-center gap-1">
-                <i class="bi bi-table"></i>
-                <span class="d-none d-md-inline">Tabela</span>
-            </a>
-            <a href="{% url 'importar' %}" class="btn btn-light btn-sm d-flex align-items-center gap-1">
-                <i class="bi bi-cloud-upload-fill"></i>
-                <span class="d-none d-md-inline">Importar Provisão</span>
-            </a>
-        </div>
-    </div>
-</nav>
+    {% include 'provisao/partials/_navbar.html' %}
 
-<!-- ───────── Conteúdo ───────── -->
-<div class=".container-fluid mx-5 py-4">
+    {% include 'provisao/partials/_toast.html' %}
 
-    {% if messages %}
-        {% for msg in messages %}
-            <div class="rennova-alert rennova-alert-{{ msg.tags }} fade-in d-flex align-items-center gap-2 mb-3" role="alert">
-                {% if msg.tags == 'success' %}<i class="bi bi-check-circle-fill"></i>
-                {% elif msg.tags == 'error' or msg.tags == 'danger' %}<i class="bi bi-x-octagon-fill"></i>
-                {% elif msg.tags == 'warning' %}<i class="bi bi-exclamation-triangle-fill"></i>
-                {% else %}<i class="bi bi-info-circle-fill"></i>{% endif %}
-                <span>{{ msg }}</span>
-            </div>
-        {% endfor %}
-    {% endif %}
+    {% block page_header %}{% endblock %}
 
-    {% block content %}{% endblock %}
-</div>
+    <main class="container-fluid px-4 flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-{% block extra_js %}{% endblock %}
+    {% include 'provisao/partials/_footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

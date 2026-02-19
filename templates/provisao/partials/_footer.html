@@ -1,0 +1,32 @@
+{% load static %}
+
+<footer class="footer-rn mt-auto">
+    <div class="container-fluid px-4">
+        <div class="row align-items-center g-2">
+            <div class="col-md-4 text-center text-md-start">
+                <span class="footer-brand d-flex align-items-center justify-content-center justify-content-md-start gap-2">
+                    <i class="bi bi-calendar-check-fill"></i>
+                    <span class="fw-semibold">Provisão de Férias</span>
+                    <span class="opacity-50">·</span>
+                    <span class="opacity-75">RN Tintas</span>
+                </span>
+            </div>
+            <div class="col-md-4 text-center">
+                <span class="footer-info">
+                    <i class="bi bi-shield-lock me-1 opacity-50"></i>
+                    Acesso restrito — uso interno do RH
+                </span>
+            </div>
+            <div class="col-md-4 text-center text-md-end">
+                <span class="footer-info">
+                    {% if request.user.is_authenticated %}
+                        <i class="bi bi-person-check me-1 opacity-50"></i>
+                        {{ request.user.get_full_name|default:request.user.username }}
+                        <span class="opacity-50 mx-1">·</span>
+                    {% endif %}
+                    {% now "Y" %} © RN Tintas
+                </span>
+            </div>
+        </div>
+    </div>
+</footer>

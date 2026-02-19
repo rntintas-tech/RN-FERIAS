@@ -3,11 +3,65 @@
 
 {% block title %}Tabela de Provisão{% endblock %}
 
+{% block extra_css %}
+<style>
+    .badge-parcela {
+        display: inline-block;
+        background: var(--primary-color);
+        color: white;
+        font-size: 0.73rem;
+        font-weight: 500;
+        padding: 2px 7px;
+        border-radius: var(--border-radius-pill);
+        margin: 1px 2px;
+        white-space: nowrap;
+    }
+
+    .btn-editar-ferias {
+        background: transparent;
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        padding: 1px 7px;
+        font-size: 0.72rem;
+        border-radius: var(--border-radius-md);
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+    }
+    .btn-editar-ferias:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    /*
+      width:1% + white-space:nowrap = coluna ajusta ao maior conteúdo.
+      Só "Férias Agendadas" e "Status" ficam sem essa classe para expandir.
+    */
+    .col-compacta {
+        width: 1%;
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
+
+<!-- Page header: gradiente azul primário, igual ao padrão RennovaApp -->
+{% block page_header %}
+<div class="rennova-page-header">
+    <div class="container-fluid px-4">
+        <h2 class="page-title">
+            <i class="bi bi-calendar-check me-2"></i>Provisão de Férias
+        </h2>
+        <p class="text-white mt-1 mb-0">
+            Gerencie os agendamentos de férias dos colaboradores da RN Tintas
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+
 {% block content %}
 
-<!-- ═══════════════════════════════════════════════════
-     STAT CARDS
-     ═══════════════════════════════════════════════════ -->
+<!-- ═══ STAT CARDS ═══ -->
 <div class="row g-3 mb-4">
 
     <div class="col-6 col-md-3 animate-up">
@@ -41,10 +95,12 @@
         <div class="rennova-card stat-card info h-100 mb-0">
             <div class="rennova-card-body py-3">
                 <div class="stat-label">Última importação</div>
-                <div class="fw-600" style="font-size:0.85rem;color:var(--info-color);">
+                <div style="font-size:0.85rem;color:var(--info-color);">
                     {% if ultima_importacao %}
                         {{ ultima_importacao.data_importacao|date:"d/m/Y" }}<br>
-                        <span class="text-muted" style="font-size:0.75rem;">{{ ultima_importacao.data_importacao|date:"H:i" }}</span>
+                        <span class="text-muted" style="font-size:0.75rem;">
+                            {{ ultima_importacao.data_importacao|date:"H:i" }}
+                        </span>
                     {% else %}
                         <span class="text-muted">Nenhuma ainda</span>
                     {% endif %}
@@ -55,9 +111,7 @@
 
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     BARRA DE BUSCA
-     ═══════════════════════════════════════════════════ -->
+<!-- ═══ BARRA DE BUSCA ═══ -->
 <div class="rennova-card mb-3 animate-up" style="animation-delay:0.3s">
     <div class="rennova-card-body py-2">
         <form method="get" class="d-flex align-items-center gap-2 flex-wrap">
@@ -85,16 +139,42 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     TABELA PRINCIPAL
-     ═══════════════════════════════════════════════════ -->
+<!-- ═══ TABELA PRINCIPAL ═══ -->
 <div class="rennova-card animate-up" style="animation-delay:0.38s">
-    <div class="rennova-card-header d-flex align-items-center justify-content-between py-2">
-        <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-table"></i>
-            Períodos Aquisitivos
-        </span>
-        <small class="opacity-75">Clique em <strong>✏ Editar</strong> para agendar férias</small>
+
+    <!-- Cabeçalho do card: título + instrução -->
+    <div class="rennova-card-header py-2">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <span class="d-flex align-items-center gap-2 fw-semibold">
+                <i class="bi bi-table"></i>
+                Períodos Aquisitivos
+            </span>
+            <small class="opacity-75">
+                Clique em <i class="bi bi-pencil-fill"></i> para agendar férias
+            </small>
+        </div>
+
+        <!-- Legenda de status: mesma cor do thead para continuidade visual -->
+        <div class="d-flex gap-3 flex-wrap mt-2" style="font-size:0.77rem;color:rgba(255,255,255,0.9);">
+            <span>
+                <span class="badge bg-danger" style="font-size:0.7rem;">⚠ URGENTE</span>
+                — limite máximo em ≤ 60 dias
+            </span>
+            <span>
+                <span class="badge bg-warning text-dark" style="font-size:0.7rem;">⏰ Atenção</span>
+                — limite máximo em ≤ 90 dias
+            </span>
+            <span>
+                <span class="badge bg-success" style="font-size:0.7rem;">✓ OK</span>
+                — dentro do prazo ou férias completas
+            </span>
+            <span>
+                <span class="badge-parcela badge-parcela-atual" style="font-size:0.7rem;">Mês atual</span>
+            </span>
+            <span>
+                <span class="badge-parcela badge-parcela-passada" style="font-size:0.7rem;">Já passou</span>
+            </span>
+        </div>
     </div>
 
     <div class="rennova-card-body p-0">
@@ -102,64 +182,60 @@
             <table class="table table-bordered table-ferias mb-0">
                 <thead>
                     <tr>
-                        <th>Código</th>
-                        <th>Colaborador</th>
-                        <th>Admissão</th>
-                        <th>Cargo</th>
-                        <th>Início Aquisit.</th>
-                        <th>Limite Ideal</th>
-                        <th>Limite Máximo</th>
-                        <th class="text-center">Dir.</th>
-                        <th class="text-center">Gozo</th>
-                        <th class="text-center">Rest.</th>
+                        <th class="col-compacta">Código</th>
+                        <th class="col-compacta">Colaborador</th>
+                        <th class="col-compacta">Admissão</th>
+                        <th class="col-compacta">Cargo</th>
+                        <th class="col-compacta">Início Aquisit.</th>
+                        <th class="col-compacta">Limite Ideal</th>
+                        <th class="col-compacta">Limite Máximo</th>
+                        <th class="col-compacta text-center">Dir.</th>
+                        <th class="col-compacta text-center">Gozo</th>
+                        <th class="col-compacta text-center">Rest.</th>
                         <th>Férias Agendadas</th>
-                        <th class="text-center">Status</th>
+                        <th class="col-compacta text-center">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for colaborador in colaboradores %}
                         {% for periodo in colaborador.periodos.all %}
                             {% with badge=periodo.status_badge %}
-                            <tr class="{% if periodo.status_limite == 'danger' %}tr-danger{% elif periodo.status_limite == 'warning' %}tr-warning{% endif %}">
+
+                            <tr id="tr-{{ periodo.id }}"
+                                class="{% if periodo.status_limite == 'danger' %}tr-danger{% elif periodo.status_limite == 'warning' %}tr-warning{% endif %}">
 
                                 {% if forloop.first %}
                                     <td rowspan="{{ colaborador.periodos.count }}"
-                                        class="fw-semibold text-muted" style="font-size:0.78rem;">
+                                        class="col-compacta fw-semibold text-muted"
+                                        style="font-size:0.78rem;">
                                         {{ colaborador.codigo }}
                                     </td>
-                                    <td rowspan="{{ colaborador.periodos.count }}" class="fw-semibold">
+                                    <td rowspan="{{ colaborador.periodos.count }}"
+                                        class="col-compacta fw-semibold">
                                         {{ colaborador.nome }}
                                     </td>
                                     <td rowspan="{{ colaborador.periodos.count }}"
-                                        class="text-muted" style="font-size:0.78rem; white-space:nowrap;">
+                                        class="col-compacta text-muted"
+                                        style="font-size:0.78rem;">
                                         {{ colaborador.data_admissao|date:"d/m/Y"|default:"—" }}
                                     </td>
                                     <td rowspan="{{ colaborador.periodos.count }}"
-                                        class="text-muted" style="font-size:0.78rem;">
+                                        class="col-compacta text-muted"
+                                        style="font-size:0.78rem;">
                                         {{ colaborador.cargo }}
                                     </td>
                                 {% endif %}
 
-                                <td style="white-space:nowrap;">{{ periodo.inicio_aquisitivo|date:"d/m/Y" }}</td>
-
-                                <!-- Limite Ideal: sem formatação de alerta — apenas informativo -->
-                                <td style="white-space:nowrap;">
-                                    {{ periodo.limite_ideal|date:"d/m/Y"|default:"—" }}
-                                </td>
-
-                                <!-- Limite Máximo: fica vermelho quando o prazo está chegando -->
-                                <td class="{% if periodo.status_limite == 'warning' or periodo.status_limite == 'danger' %}text-danger fw-semibold{% endif %}"
-                                    style="white-space:nowrap;">
+                                <td class="col-compacta">{{ periodo.inicio_aquisitivo|date:"d/m/Y" }}</td>
+                                <td class="col-compacta">{{ periodo.limite_ideal|date:"d/m/Y"|default:"—" }}</td>
+                                <td class="col-compacta {% if periodo.status_limite == 'warning' or periodo.status_limite == 'danger' %}text-danger fw-semibold{% endif %}">
                                     {{ periodo.limite_maximo|date:"d/m/Y"|default:"—" }}
                                 </td>
+                                <td class="col-compacta text-center">{{ periodo.dias_direito|floatformat:0 }}</td>
+                                <td class="col-compacta text-center">{{ periodo.dias_gozo|floatformat:0 }}</td>
+                                <td class="col-compacta text-center">{{ periodo.dias_restantes|floatformat:0 }}</td>
 
-                                <td class="text-center">{{ periodo.dias_direito|floatformat:0 }}</td>
-                                <td class="text-center">{{ periodo.dias_gozo|floatformat:0 }}</td>
-                                <td class="text-center">{{ periodo.dias_restantes|floatformat:0 }}</td>
-
-                                <!-- Férias Agendadas: badges coloridos por situação do mês -->
-                                <td class="cell-ferias"
-                                    id="cell-ferias-{{ periodo.id }}"
+                                <td id="cell-ferias-{{ periodo.id }}"
                                     data-periodo-id="{{ periodo.id }}"
                                     data-nome="{{ colaborador.nome }}"
                                     data-periodo-label="{{ periodo.inicio_aquisitivo|date:'d/m/Y' }} → {{ periodo.fim_aquisitivo|date:'d/m/Y' }}"
@@ -167,11 +243,13 @@
                                     data-parcelas='{{ periodo.parcelas.all|jsonparcelas }}'>
 
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        <span class="parcelas-resumo" id="resumo-{{ periodo.id }}">
+                                        <span id="resumo-{{ periodo.id }}">
                                             {% now "Y-m" as mes_atual %}
                                             {% for parcela in periodo.parcelas.all %}
-                                                {# Mês passado → verde | Mês atual → amarelo | Futuro → azul escuro #}
-                                                <span class="badge-parcela {% if parcela.mes_ferias < mes_atual %}badge-parcela-passada{% elif parcela.mes_ferias == mes_atual %}badge-parcela-atual{% endif %}">
+                                                <span class="badge-parcela
+                                                    {% if parcela.mes_ferias < mes_atual %}badge-parcela-passada
+                                                    {% elif parcela.mes_ferias == mes_atual %}badge-parcela-atual
+                                                    {% endif %}">
                                                     {{ parcela.mes_ferias_display }}{% if parcela.dias %} ({{ parcela.dias|floatformat:0 }}d){% endif %}
                                                 </span>
                                             {% empty %}
@@ -185,24 +263,27 @@
                                     </div>
                                 </td>
 
-                                <!-- Badge de status -->
-                                <td class="text-center">
-                                    <span class="badge {{ badge.0 }}" style="font-size:0.72rem;">
+                                <td class="col-compacta text-center">
+                                    <span id="status-badge-{{ periodo.id }}"
+                                          class="badge {{ badge.0 }}"
+                                          style="font-size:0.72rem;">
                                         {{ badge.1 }}
                                     </span>
                                 </td>
 
                             </tr>
                             {% endwith %}
+
                         {% empty %}
                             <tr>
-                                <td>{{ colaborador.codigo }}</td>
-                                <td class="fw-semibold">{{ colaborador.nome }}</td>
-                                <td>{{ colaborador.data_admissao|date:"d/m/Y"|default:"—" }}</td>
-                                <td>{{ colaborador.cargo }}</td>
+                                <td class="col-compacta">{{ colaborador.codigo }}</td>
+                                <td class="col-compacta fw-semibold">{{ colaborador.nome }}</td>
+                                <td class="col-compacta">{{ colaborador.data_admissao|date:"d/m/Y"|default:"—" }}</td>
+                                <td class="col-compacta">{{ colaborador.cargo }}</td>
                                 <td colspan="8" class="text-muted text-center">Sem períodos aquisitivos</td>
                             </tr>
                         {% endfor %}
+
                     {% empty %}
                         <tr>
                             <td colspan="12">
@@ -222,57 +303,47 @@
     </div>
 </div>
 
-<!-- Legenda de status -->
-<div class="d-flex gap-3 flex-wrap mt-2" style="font-size:0.78rem;color:var(--text-muted);">
-    <span><span class="badge bg-danger">⚠ URGENTE</span> — limite máximo em ≤ 60 dias</span>
-    <span><span class="badge bg-warning text-dark">⏰ Atenção</span> — limite máximo em ≤ 90 dias</span>
-    <span><span class="badge bg-success">✓ OK</span> — dentro do prazo ou férias completas</span>
-    <span><span class="badge-parcela badge-parcela-atual" style="font-size:0.73rem;">Mês atual</span></span>
-    <span><span class="badge-parcela badge-parcela-passada" style="font-size:0.73rem;">Já passou</span></span>
-</div>
 
-
-<!-- ═══════════════════════════════════════════════════
-     MODAL DE FÉRIAS
-     Abre ao clicar no botão ✏ de qualquer período.
-     Permite adicionar e remover parcelas de férias.
-     ═══════════════════════════════════════════════════ -->
-<div class="modal fade" id="modalFerias" tabindex="-1" aria-labelledby="modalFeriasLabel" aria-hidden="true">
+<!-- ═══ MODAL DE FÉRIAS ═══ -->
+<div class="modal fade" id="modalFerias" tabindex="-1"
+     aria-labelledby="modalFeriasLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius:var(--border-radius-lg); border:none;">
+        <div class="modal-content" style="border-radius:var(--border-radius-lg);border:none;">
 
-            <div class="modal-header" style="background:var(--primary-gradient); color:white; border-radius:var(--border-radius-lg) var(--border-radius-lg) 0 0;">
+            <div class="modal-header"
+                 style="background:var(--primary-gradient);color:white;
+                        border-radius:var(--border-radius-lg) var(--border-radius-lg) 0 0;">
                 <div>
                     <h5 class="modal-title fw-bold mb-0" id="modalFeriasLabel">
                         <i class="bi bi-calendar2-check me-2"></i>Férias Agendadas
                     </h5>
                     <small id="modal-subtitulo" class="opacity-75"></small>
                 </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body px-4 pt-3 pb-2">
 
-                <!-- Barra de uso de dias — só aparece quando há dias informados -->
                 <div id="barra-dias" class="mb-3" style="display:none;">
-                    <div class="d-flex justify-content-between mb-1" style="font-size:0.78rem; color:var(--text-muted);">
+                    <div class="d-flex justify-content-between mb-1"
+                         style="font-size:0.78rem;color:var(--text-muted);">
                         <span>Dias agendados</span>
                         <span id="label-dias"></span>
                     </div>
-                    <div class="progress" style="height:8px; border-radius:var(--border-radius-pill);">
-                        <div id="barra-prog" class="progress-bar" role="progressbar" style="width:0%; background:var(--primary-gradient);"></div>
+                    <div class="progress" style="height:8px;border-radius:var(--border-radius-pill);">
+                        <div id="barra-prog" class="progress-bar" role="progressbar"
+                             style="width:0%;background:var(--primary-gradient);"></div>
                     </div>
                 </div>
 
-                <!-- Lista de parcelas existentes -->
-                <div id="lista-parcelas">
-                    <!-- preenchido por renderizarParcelas() -->
-                </div>
+                <div id="lista-parcelas"></div>
 
                 <hr class="my-3">
 
-                <!-- Formulário para adicionar nova parcela -->
-                <p class="fw-semibold mb-2" style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">
+                <p class="fw-semibold mb-2"
+                   style="font-size:0.85rem;color:var(--text-muted);
+                          text-transform:uppercase;letter-spacing:0.5px;">
                     Adicionar parcela
                 </p>
                 <div class="row g-2 align-items-end">
@@ -281,28 +352,36 @@
                         <input type="month" id="nova-mes" class="form-control form-control-sm">
                     </div>
                     <div class="col-3">
-                        <label class="form-label mb-1" style="font-size:0.78rem;">Dias <span class="text-muted">(opc.)</span></label>
+                        <label class="form-label mb-1" style="font-size:0.78rem;">
+                            Dias <span class="text-muted">(opc.)</span>
+                        </label>
                         <input type="number" id="nova-dias" class="form-control form-control-sm"
                                placeholder="ex: 15" min="1" max="30" step="0.5">
                     </div>
                     <div class="col-4">
-                        <label class="form-label mb-1" style="font-size:0.78rem;">Obs. <span class="text-muted">(opc.)</span></label>
-                        <input type="text" id="nova-obs" class="form-control form-control-sm" placeholder="Nota...">
+                        <label class="form-label mb-1" style="font-size:0.78rem;">
+                            Obs. <span class="text-muted">(opc.)</span>
+                        </label>
+                        <input type="text" id="nova-obs" class="form-control form-control-sm"
+                               placeholder="Nota...">
                     </div>
                     <div class="col-12">
                         <button class="btn btn-sm w-100 mt-1"
-                                style="background:var(--primary-gradient); color:white; border:none; border-radius:var(--border-radius-md);"
+                                style="background:var(--primary-gradient);color:white;
+                                       border:none;border-radius:var(--border-radius-md);"
                                 onclick="adicionarParcela()">
                             <i class="bi bi-plus-circle me-1"></i> Adicionar
                         </button>
-                        <div id="erro-modal" class="text-danger mt-1" style="font-size:0.8rem;display:none;"></div>
+                        <div id="erro-modal" class="text-danger mt-1"
+                             style="font-size:0.8rem;display:none;"></div>
                     </div>
                 </div>
 
             </div>
 
             <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm"
+                        data-bs-dismiss="modal">Fechar</button>
             </div>
 
         </div>
@@ -312,79 +391,30 @@
 {% endblock %}
 
 
-{% block extra_css %}
-<style>
-    /* Badges de parcela na célula da tabela */
-    .badge-parcela {
-        display: inline-block;
-        background: var(--primary-color);
-        color: white;
-        font-size: 0.73rem;
-        font-weight: 500;
-        padding: 2px 7px;
-        border-radius: var(--border-radius-pill);
-        margin: 1px 2px;
-        white-space: nowrap;
-    }
-
-    /* Botão de edição discreto */
-    .btn-editar-ferias {
-        background: transparent;
-        border: 1px solid var(--primary-color);
-        color: var(--primary-color);
-        padding: 1px 7px;
-        font-size: 0.72rem;
-        border-radius: var(--border-radius-md);
-        flex-shrink: 0;
-        transition: all 0.2s ease;
-    }
-    .btn-editar-ferias:hover {
-        background: var(--primary-color);
-        color: white;
-    }
-
-    /* Célula de férias: min-width para não ficar espremida */
-    .cell-ferias { min-width: 160px; }
-</style>
-{% endblock %}
-
-
 {% block extra_js %}
 <script>
-// ─────────────────────────────────────────────────────────────────
-// Estado do modal: qual período está sendo editado
-// ─────────────────────────────────────────────────────────────────
 let periodoAtivo = null;
-
-const modalBS = new bootstrap.Modal(document.getElementById('modalFerias'));
+const modalBS   = new bootstrap.Modal(document.getElementById('modalFerias'));
 
 function getCookie(name) {
-    const val = `; ${document.cookie}`;
+    const val   = `; ${document.cookie}`;
     const parts = val.split(`; ${name}=`);
     return parts.length === 2 ? parts.pop().split(';').shift() : '';
 }
 
-
-// ─────────────────────────────────────────────────────────────────
-// Abre o modal carregando as parcelas do data-attribute da célula
-// (sem AJAX extra — os dados já vieram no HTML)
-// ─────────────────────────────────────────────────────────────────
 function abrirModal(periodoId) {
-    const cell = document.getElementById('cell-ferias-' + periodoId);
+    const cell   = document.getElementById('cell-ferias-' + periodoId);
     periodoAtivo = periodoId;
 
     document.getElementById('modal-subtitulo').textContent =
         cell.dataset.nome + ' · ' + cell.dataset.periodoLabel;
 
-    // Lê parcelas do data-attribute (JSON embutido no template)
     let parcelas = [];
     try { parcelas = JSON.parse(cell.dataset.parcelas || '[]'); } catch(e) {}
 
-    const diasDireito = parseFloat(cell.dataset.diasDireito || 0);
     renderizarParcelas(parcelas);
-    atualizarBarra(parcelas, diasDireito);
+    atualizarBarra(parcelas, parseFloat(cell.dataset.diasDireito || 0));
 
-    // Limpa o formulário de adição
     document.getElementById('nova-mes').value  = '';
     document.getElementById('nova-dias').value = '';
     document.getElementById('nova-obs').value  = '';
@@ -393,10 +423,6 @@ function abrirModal(periodoId) {
     modalBS.show();
 }
 
-
-// ─────────────────────────────────────────────────────────────────
-// Renderiza a lista de parcelas dentro do modal
-// ─────────────────────────────────────────────────────────────────
 function renderizarParcelas(parcelas) {
     const container = document.getElementById('lista-parcelas');
 
@@ -407,143 +433,137 @@ function renderizarParcelas(parcelas) {
         return;
     }
 
-    const linhas = parcelas.map(p => `
-        <div class="d-flex align-items-center justify-content-between py-1 px-2
-                    border-bottom" style="font-size:0.85rem;">
+    container.innerHTML = parcelas.map(p => `
+        <div class="d-flex align-items-center justify-content-between py-1 px-2 border-bottom"
+             style="font-size:0.85rem;">
             <div class="d-flex align-items-center gap-2">
                 <span class="badge-parcela">${p.mes_ferias_display}</span>
-                ${p.dias ? `<span class="text-muted">${p.dias}d</span>` : ''}
+                ${p.dias       ? `<span class="text-muted">${p.dias}d</span>` : ''}
                 ${p.observacao ? `<span class="text-muted fst-italic">${p.observacao}</span>` : ''}
             </div>
-            <button class="btn btn-sm btn-outline-danger" style="padding:1px 8px;font-size:0.75rem;"
+            <button class="btn btn-sm btn-outline-danger"
+                    style="padding:1px 8px;font-size:0.75rem;"
                     onclick="deletarParcela(${p.id})">
                 <i class="bi bi-trash"></i>
             </button>
         </div>
     `).join('');
-
-    container.innerHTML = linhas;
 }
 
-
-// ─────────────────────────────────────────────────────────────────
-// Atualiza tanto o modal quanto a célula na tabela após qualquer
-// mudança (adição ou remoção de parcela)
-// ─────────────────────────────────────────────────────────────────
-function atualizarUI(periodoId, parcelas, diasUsados, diasDireito) {
-    // Atualiza modal
-    renderizarParcelas(parcelas);
-    atualizarBarra(parcelas, diasDireito, diasUsados);
-
-    // Atualiza data-attribute da célula (para reaberturas futuras do modal)
-    const cell = document.getElementById('cell-ferias-' + periodoId);
-    cell.dataset.parcelas = JSON.stringify(parcelas);
-
-    // Atualiza o resumo na célula da tabela com cores por mês
-    const resumo = document.getElementById('resumo-' + periodoId);
-    if (!parcelas.length) {
-        resumo.innerHTML = `<span class="text-muted" style="font-size:0.78rem;">—</span>`;
-        return;
-    }
-
-    // "2026-02" — formato YYYY-MM idêntico ao mes_ferias salvo no banco
-    const mesAtual = new Date().toISOString().slice(0, 7);
-
-    resumo.innerHTML = parcelas.map(p => {
-        let cls = 'badge-parcela';
-        if (p.mes_ferias < mesAtual)        cls += ' badge-parcela-passada';
-        else if (p.mes_ferias === mesAtual)  cls += ' badge-parcela-atual';
-        const dias = p.dias ? ` (${parseFloat(p.dias)}d)` : '';
-        return `<span class="${cls}">${p.mes_ferias_display}${dias}</span>`;
-    }).join('');
-}
-
-
-// ─────────────────────────────────────────────────────────────────
-// Atualiza a barra de progresso de dias no topo do modal
-// ─────────────────────────────────────────────────────────────────
 function atualizarBarra(parcelas, diasDireito, diasUsados) {
     const barra = document.getElementById('barra-dias');
     if (!diasDireito) { barra.style.display = 'none'; return; }
 
-    // Se diasUsados não foi passado (abertura inicial), calcula do JSON
     const usados = (diasUsados !== undefined)
         ? diasUsados
         : parcelas.reduce((acc, p) => acc + (p.dias ? parseFloat(p.dias) : 0), 0);
 
-    const pct = Math.min(100, Math.round((usados / diasDireito) * 100));
+    const pct  = Math.min(100, Math.round((usados / diasDireito) * 100));
     const prog = document.getElementById('barra-prog');
-    prog.style.width = pct + '%';
-    prog.className = 'progress-bar' + (pct >= 100 ? ' bg-danger' : pct >= 80 ? ' bg-warning' : '');
-    if (pct < 80) prog.style.background = 'var(--primary-gradient)';
-    else prog.style.background = '';
+    prog.style.width      = pct + '%';
+    prog.className        = 'progress-bar' + (pct >= 100 ? ' bg-danger' : pct >= 80 ? ' bg-warning' : '');
+    prog.style.background = pct < 80 ? 'var(--primary-gradient)' : '';
 
     document.getElementById('label-dias').textContent = `${usados}d / ${diasDireito}d`;
     barra.style.display = 'block';
 }
 
+function atualizarUI(periodoId, data) {
+    const { parcelas, dias_usados, dias_direito, status_badge, status_limite } = data;
+    const cell     = document.getElementById('cell-ferias-' + periodoId);
+    const mesAtual = new Date().toISOString().slice(0, 7);
 
-// ─────────────────────────────────────────────────────────────────
-// Envia nova parcela para o servidor
-// ─────────────────────────────────────────────────────────────────
+    renderizarParcelas(parcelas);
+    atualizarBarra(parcelas, dias_direito, dias_usados);
+    cell.dataset.parcelas = JSON.stringify(parcelas);
+
+    const resumo = document.getElementById('resumo-' + periodoId);
+    resumo.innerHTML = parcelas.length
+        ? parcelas.map(p => {
+            let cls = 'badge-parcela';
+            if      (p.mes_ferias < mesAtual)  cls += ' badge-parcela-passada';
+            else if (p.mes_ferias === mesAtual) cls += ' badge-parcela-atual';
+            const dias = p.dias ? ` (${parseFloat(p.dias)}d)` : '';
+            return `<span class="${cls}">${p.mes_ferias_display}${dias}</span>`;
+          }).join('')
+        : `<span class="text-muted" style="font-size:0.78rem;">—</span>`;
+
+    if (status_badge) {
+        const el = document.getElementById('status-badge-' + periodoId);
+        if (el) {
+            el.className      = `badge ${status_badge[0]}`;
+            el.style.fontSize = '0.72rem';
+            el.textContent    = status_badge[1];
+        }
+    }
+
+    if (status_limite !== undefined) {
+        const tr = document.getElementById('tr-' + periodoId);
+        if (tr) {
+            tr.classList.remove('tr-danger', 'tr-warning');
+            if      (status_limite === 'danger')  tr.classList.add('tr-danger');
+            else if (status_limite === 'warning') tr.classList.add('tr-warning');
+        }
+    }
+}
+
 function adicionarParcela() {
-    const mes  = document.getElementById('nova-mes').value;
-    const dias = document.getElementById('nova-dias').value;
-    const obs  = document.getElementById('nova-obs').value;
+    const mes    = document.getElementById('nova-mes').value;
+    const dias   = document.getElementById('nova-dias').value;
+    const obs    = document.getElementById('nova-obs').value;
     const erroEl = document.getElementById('erro-modal');
 
     if (!mes) {
-        erroEl.textContent = 'Informe o mês.';
+        erroEl.textContent   = 'Informe o mês.';
         erroEl.style.display = 'block';
         return;
     }
     erroEl.style.display = 'none';
 
     fetch("{% url 'salvar_parcela' %}", {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-        body: JSON.stringify({ periodo_id: periodoAtivo, mes_ferias: mes, dias: dias, observacao: obs }),
+        body:    JSON.stringify({ periodo_id: periodoAtivo, mes_ferias: mes, dias, observacao: obs }),
     })
     .then(r => r.json())
     .then(data => {
         if (data.ok) {
-            const cell = document.getElementById('cell-ferias-' + periodoAtivo);
-            atualizarUI(periodoAtivo, data.parcelas, data.dias_usados, parseFloat(cell.dataset.diasDireito || 0));
+            atualizarUI(periodoAtivo, data);
             document.getElementById('nova-mes').value  = '';
             document.getElementById('nova-dias').value = '';
             document.getElementById('nova-obs').value  = '';
+            showToast('Férias adicionadas com sucesso!', 'success');
         } else {
-            erroEl.textContent = data.erro || 'Erro ao salvar.';
+            erroEl.textContent   = data.erro || 'Erro ao salvar.';
             erroEl.style.display = 'block';
+            showToast(data.erro || 'Erro ao salvar.', 'danger');
         }
     })
     .catch(() => {
-        erroEl.textContent = 'Erro de conexão.';
+        erroEl.textContent   = 'Erro de conexão.';
         erroEl.style.display = 'block';
+        showToast('Erro de conexão com o servidor.', 'danger');
     });
 }
 
-
-// ─────────────────────────────────────────────────────────────────
-// Remove uma parcela
-// ─────────────────────────────────────────────────────────────────
 function deletarParcela(parcelaId) {
     if (!confirm('Remover esta parcela?')) return;
 
     fetch("{% url 'deletar_parcela' %}", {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-        body: JSON.stringify({ parcela_id: parcelaId }),
+        body:    JSON.stringify({ parcela_id: parcelaId }),
     })
     .then(r => r.json())
     .then(data => {
         if (data.ok) {
-            const cell = document.getElementById('cell-ferias-' + periodoAtivo);
-            atualizarUI(periodoAtivo, data.parcelas, data.dias_usados, parseFloat(cell.dataset.diasDireito || 0));
+            atualizarUI(periodoAtivo, data);
+            showToast('Parcela removida.', 'warning');
         } else {
-            alert('Erro: ' + (data.erro || 'Falha ao remover.'));
+            showToast(data.erro || 'Erro ao remover.', 'danger');
         }
-    });
+    })
+    .catch(() => showToast('Erro de conexão com o servidor.', 'danger'));
 }
 </script>
 {% endblock %}

@@ -1,55 +1,116 @@
 /*
- * ferias.css — Estilos específicos do app de Provisão de Férias
- * Usa exclusivamente as variáveis definidas em variables.css (design system RennovaApp).
- * Não inventa cores — tudo vem de --primary-gradient, --danger-color, etc.
+ * ferias.css
+ * Estilos do app de Provisão de Férias — RN Tintas
+ * Depende de variables.css do design system RennovaApp.
+ * Não define cores hardcoded: usa somente variáveis CSS.
  */
 
-/* ---------- Navbar / Header ----------
-   Usa o mesmo gradiente da .rennova-page-header do style-guide.
-*/
-.navbar-rn {
-  background: var(--primary-gradient) !important;
-  box-shadow: 0 2px 12px rgba(0, 21, 100, 0.25);
-  padding: 0.75rem 1.5rem;
+
+/* =============================================================
+   NAVBAR BRANCA
+   Substitui a navbar azul antiga. Fundo branco com borda inferior.
+   ============================================================= */
+
+.navbar-rn-white {
+    background: var(--white) !important;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+    padding: 0.5rem 0;
 }
 
-.navbar-rn .navbar-brand {
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
+.navbar-rn-white .navbar-brand {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-color);
+    text-decoration: none;
 }
 
-.navbar-rn .btn-outline-light {
-  border-width: 1.5px;
-  transition: all 0.25s ease;
+.navbar-rn-white .nav-link {
+    color: var(--text-color);
+    border-radius: var(--border-radius-sm);
+    padding: 6px 10px !important;
+    font-size: 0.88rem;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
-.navbar-rn .btn-outline-light:hover {
-  background: rgba(255,255,255,0.2);
+.navbar-rn-white .nav-link:hover {
+    background: var(--light-bg);
+    color: var(--primary-color);
 }
 
-.navbar-rn .btn-light {
-  color: var(--primary-color);
-  font-weight: 600;
-  transition: all 0.25s ease;
+.navbar-rn-white .nav-link.active {
+    color: var(--primary-color);
+    background: rgba(58, 123, 213, 0.08);
+    font-weight: 600;
 }
 
-.navbar-rn .btn-light:hover {
-  background: #f5f5f5;
-  transform: translateY(-1px);
+
+/* =============================================================
+   PAGE HEADER
+   Faixa azul primária logo abaixo da navbar.
+   Sem border-radius — ocupa a largura total da página.
+   ============================================================= */
+
+.rennova-page-header {
+    background: var(--primary-gradient);
+    color: var(--white);
+    padding: 3.25rem 0;
+    border-radius: 0;
+    width: 100%;
 }
 
-/* ---------- Stat Cards (topo da index) ---------- */
+.rennova-page-header .page-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--white);
+}
+
+.rennova-page-header p {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    margin: 0.25rem 0 0;
+    color: var(--white);
+}
+
+
+/* =============================================================
+   FOOTER
+   Gradiente primário, mesmo padrão do page-header.
+   ============================================================= */
+
+.footer-rn {
+    background: var(--primary-gradient);
+    padding: 0.85rem 0;
+    margin-top: 2rem;
+}
+
+.footer-brand {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.88rem;
+}
+
+.footer-info {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.78rem;
+}
+
+
+/* =============================================================
+   STAT CARDS
+   Cards do topo da index com borda colorida à esquerda.
+   ============================================================= */
+
 .stat-card {
-  border-left: 4px solid;
-  border-radius: var(--border-radius-lg);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  box-shadow: var(--box-shadow-sm);
+    border-left: 4px solid;
+    border-radius: var(--border-radius-lg);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: var(--box-shadow-sm);
 }
 
 .stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--box-shadow-md);
+    transform: translateY(-3px);
+    box-shadow: var(--box-shadow-md);
 }
 
 .stat-card.danger  { border-color: var(--danger-color); }
@@ -58,132 +119,170 @@
 .stat-card.info    { border-color: var(--info-color); }
 
 .stat-card .stat-number {
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .stat-card .stat-label {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
 }
 
-/* ---------- Tabela de Férias ---------- */
+
+/* =============================================================
+   TABELA DE FÉRIAS
+   ============================================================= */
+
 .table-ferias {
-  font-size: 0.83rem;
+    font-size: 0.83rem;
 }
 
-/* Cabeçalho usa o gradiente primário do style-guide */
 .table-ferias thead th {
-  background: var(--primary-color);
-  color: var(--white);
-  white-space: nowrap;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  border: none;
-  padding: 0.75rem 0.65rem;
+    background: var(--primary-color);
+    color: var(--white);
+    white-space: nowrap;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    border: none;
+    padding: 0.75rem 0.65rem;
 }
 
 .table-ferias td {
-  vertical-align: middle;
-  padding: 0.55rem 0.65rem;
-  border-color: #edf2f7;
+    vertical-align: middle;
+    padding: 0.55rem 0.65rem;
+    border-color: #edf2f7;
 }
 
 .table-ferias tbody tr {
-  transition: background-color 0.15s ease;
+    transition: background-color 0.15s ease;
 }
 
 .table-ferias tbody tr:hover {
-  background-color: rgba(var(--primary-color-rgb), 0.04) !important;
+    background-color: rgba(58, 123, 213, 0.04) !important;
 }
 
-/* Linhas de alerta — usa cores semânticas do style-guide */
-.tr-danger  { background-color: rgba(var(--danger-color-rgb),  0.06) !important; }
-.tr-warning { background-color: rgba(var(--warning-color-rgb), 0.08) !important; }
+/* Linhas com alerta de prazo */
+.tr-danger  { background-color: rgba(220, 53, 69, 0.06) !important; }
+.tr-warning { background-color: rgba(255, 193, 7, 0.08) !important; }
 
-.tr-danger:hover  { background-color: rgba(var(--danger-color-rgb),  0.12) !important; }
-.tr-warning:hover { background-color: rgba(var(--warning-color-rgb), 0.15) !important; }
+.tr-danger:hover  { background-color: rgba(220, 53, 69, 0.12) !important; }
+.tr-warning:hover { background-color: rgba(255, 193, 7, 0.15) !important; }
 
-/* ---------- Input inline de Mês / Observação ---------- */
-.input-mes {
-  border: 1.5px solid transparent;
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.83rem;
-  padding: 3px 6px;
-  width: 120px;
-  border-radius: var(--border-radius-sm);
-  transition: all 0.2s var(--transition-timing);
-  color: var(--text-color);
+/*
+ * Colunas compactas: width:1% + white-space:nowrap faz o browser
+ * dimensionar a coluna pelo maior conteúdo presente nela.
+ * Só "Férias Agendadas" fica sem esta classe para expandir livremente.
+ */
+.col-compacta {
+    width: 1%;
+    white-space: nowrap;
 }
 
-.input-mes:hover {
-  border-color: var(--border-color);
-  background: var(--white);
+
+/* =============================================================
+   BADGES DE PARCELA DE FÉRIAS
+   Exibidos dentro da célula "Férias Agendadas".
+   Cor padrão = azul (futuro). Variações por momento do mês.
+   ============================================================= */
+
+.badge-parcela {
+    display: inline-block;
+    background: var(--primary-color);
+    color: var(--white);
+    font-size: 0.73rem;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: var(--border-radius-pill);
+    margin: 1px 2px;
+    white-space: nowrap;
 }
 
-.input-mes:focus {
-  border-color: var(--secondary-color);
-  background: var(--white);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(var(--secondary-color-rgb), 0.15);
+/* Mês atual: amarelo — está acontecendo agora */
+.badge-parcela-atual {
+    background: var(--warning-color) !important;
+    color: #1a1a1a !important;
 }
 
-/* Input de observação — um pouco mais largo */
-.input-obs {
-  width: 150px !important;
+/* Mês passado: verde — férias realizadas */
+.badge-parcela-passada {
+    background: var(--success-color) !important;
+    color: var(--white) !important;
 }
 
-/* ---------- Badge "Salvo" (AJAX feedback) ---------- */
-.badge-salvo {
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  font-size: 0.7rem;
+
+/* =============================================================
+   BOTÃO DE EDITAR FÉRIAS (lápis dentro da célula)
+   ============================================================= */
+
+.btn-editar-ferias {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 1px 7px;
+    font-size: 0.72rem;
+    border-radius: var(--border-radius-md);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
 }
 
-.badge-salvo.show { opacity: 1; }
+.btn-editar-ferias:hover {
+    background: var(--primary-color);
+    color: var(--white);
+}
 
-/* ---------- Busca ---------- */
+
+/* =============================================================
+   BARRA DE BUSCA
+   ============================================================= */
+
 .search-bar .form-control {
-  border-radius: var(--border-radius-md) 0 0 var(--border-radius-md);
-  border: 1.5px solid var(--border-color);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    border-radius: var(--border-radius-md) 0 0 var(--border-radius-md);
+    border: 1.5px solid var(--border-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-bar .form-control:focus {
-  border-color: var(--secondary-color);
-  box-shadow: 0 0 0 3px rgba(var(--secondary-color-rgb), 0.15);
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(58, 123, 213, 0.15);
 }
 
-/* ---------- Upload / Import card ---------- */
+
+/* =============================================================
+   ZONA DE UPLOAD (tela de importar)
+   ============================================================= */
+
 .upload-zone {
-  border: 2px dashed var(--border-color);
-  border-radius: var(--border-radius-lg);
-  padding: 2rem;
-  text-align: center;
-  transition: all var(--transition-speed-normal) var(--transition-timing);
-  cursor: pointer;
-  background: var(--light-bg);
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    background: var(--light-bg);
 }
 
 .upload-zone:hover,
 .upload-zone.dragover {
-  border-color: var(--secondary-color);
-  background: rgba(var(--secondary-color-rgb), 0.05);
+    border-color: var(--secondary-color);
+    background: rgba(58, 123, 213, 0.04);
 }
 
-/* ---------- Animações de entrada ---------- */
+
+/* =============================================================
+   ANIMAÇÕES DE ENTRADA
+   ============================================================= */
+
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .animate-up {
-  animation: slideUp 0.45s ease both;
+    animation: slideUp 0.45s ease both;
 }
 
 .animate-up:nth-child(1) { animation-delay: 0.05s; }
@@ -191,40 +290,30 @@
 .animate-up:nth-child(3) { animation-delay: 0.19s; }
 .animate-up:nth-child(4) { animation-delay: 0.26s; }
 
-/* ---------- Página vazia ---------- */
+
+/* =============================================================
+   ESTADO VAZIO (nenhum colaborador / resultado de busca)
+   ============================================================= */
+
 .empty-state {
-  padding: 4rem 2rem;
-  text-align: center;
-  color: var(--text-muted);
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--text-muted);
 }
 
 .empty-state i {
-  font-size: 3.5rem;
-  opacity: 0.35;
-  display: block;
-  margin-bottom: 1rem;
+    font-size: 3.5rem;
+    opacity: 0.35;
+    display: block;
+    margin-bottom: 1rem;
 }
 
-/* ---------- Responsividade básica ---------- */
+
+/* =============================================================
+   RESPONSIVIDADE
+   ============================================================= */
+
 @media (max-width: 768px) {
-  .stat-card .stat-number { font-size: 1.5rem; }
-  .table-ferias           { font-size: 0.75rem; }
-  .input-mes              { width: 100px; }
-}
-
-/* ---------- Badges de parcela de férias ----------
-   Cor base (azul escuro) = agendamento futuro.
-   Variações indicam o momento em relação ao mês atual.
-*/
-
-/* Mês atual: amarelo — "está acontecendo agora" */
-.badge-parcela-atual {
-  background: var(--warning-color) !important;
-  color: #1a1a1a !important;
-}
-
-/* Mês já passou: verde — férias realizadas */
-.badge-parcela-passada {
-  background: var(--success-color) !important;
-  color: var(--white) !important;
+    .stat-card .stat-number { font-size: 1.5rem; }
+    .table-ferias           { font-size: 0.75rem; }
 }

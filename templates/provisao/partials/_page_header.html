@@ -1,0 +1,14 @@
+{% load static %}
+
+<div class="rennova-page-header">
+    <div class="container-fluid px-4">
+        <h2 class="page-title">
+            <i class="bi {{ icon_class|default:'bi-circle' }} me-2"></i>{{ title }}
+        </h2>
+        {% if description %}
+            <p class="text-white mt-1 mb-0" style="opacity:0.8;font-size:0.88rem;">
+                {{ description }}
+            </p>
+        {% endif %}
+    </div>
+</div>
