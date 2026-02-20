@@ -72,11 +72,13 @@ def importar(request):
     request.session['linhas_csv'] = linhas
 
     return render(request, 'provisao/confirmar_importacao.html', {
-        'linhas':         linhas,
-        'novos':          analise['novos'],
-        'removidos':      analise['removidos'],
-        'novos_nomes':    analise['novos_nomes'],
-        'removidos_objs': analise['removidos_objs'],
+        'linhas':          linhas,
+        'total_linhas':    len(linhas),
+        'novos':           analise['novos'],
+        'removidos':       analise['removidos'],
+        'existentes_count': len(analise['existentes']),
+        'novos_nomes':     analise['novos_nomes'],
+        'removidos_objs':  analise['removidos_objs'],
     })
 
 
@@ -124,10 +126,12 @@ def confirmar_importacao(request):
                     continue
                 novos_count += 1
             else:
-                colaborador.nome  = l['nome']
-                colaborador.cargo = l['cargo']
-                colaborador.ativo = True
+                colaborador.nome    = l['nome']
+                colaborador.cargo   = l['cargo']
+                colaborador.empresa = l['empresa']  # ← adicionar essa linha
+                colaborador.ativo   = True
                 colaborador.save()
+                atualizados_count += 1
 
             # Preserva parcelas de férias: get_or_create garante que registros
             # existentes (com parcelas vinculadas) não sejam recriados

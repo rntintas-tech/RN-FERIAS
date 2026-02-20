@@ -52,7 +52,7 @@
    ============================================================= */
 
 .rennova-page-header {
-    background: var(--primary-gradient);
+    background: var(--secondary-gradient);
     color: var(--white);
     padding: 3.25rem 0;
     border-radius: 0;

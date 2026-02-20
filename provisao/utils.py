@@ -5,8 +5,101 @@ datas em formato numérico Excel (serial), e campos decimais com vírgula.
 """
 import csv
 import io
+import re
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
+
+
+# Mapa: código da empresa (3 dígitos) → nome sintético
+_EMPRESA_MAP = {
+    '001': '001 - RN - MATRIZ',
+    '002': '002 - RN - TC1',
+    '003': '003 - RN - TP',
+    '004': '004 - RN - PA1',
+    '005': '005 - RN - VG1',
+    '006': '006 - RN - VG2',
+    '007': '007 - RN - CB',
+    '008': '008 - RN - SR',
+    '009': '009 - RN - EM',
+    '010': '010 - RN - PA2',
+    '011': '011 - RN - TC2',
+    '012': '012 - RN - LB',
+    '013': '013 - RN - CX',
+    '014': '014 - RN - CP',
+    '015': '015 - RN - AF1',
+    '016': '016 - RN - CL',
+    '017': '017 - RN - BE',
+    '018': '018 - RN - NP',
+    '019': '019 - RN - LV',
+    '020': '020 - RN - OL',
+    '021': '021 - RN - SA',
+    '022': '022 - RN - SG',
+    '023': '023 - RN - ET',
+    '024': '024 - RN - PD',
+    '025': '025 - RN - CG',
+    '026': '026 - RN - CZ',
+    '027': '027 - RN - MC1',
+    '028': '028 - RN - IT',
+    '029': '029 - RN - SL',
+    '030': '030 - RN - MS',
+    '031': '031 - RN - OF',
+    '032': '032 - RN - JC',
+    '033': '033 - RN - IJ',
+    '034': '034 - RN - CEN',
+    '035': '035 - RN - AR',
+    '036': '036 - RN - AF2',
+    '038': '038 - RN - BM',
+    '039': '039 - RN - PA3',
+    '040': '040 - RN - PC2',
+    '041': '041 - RN - ITINERANTE',
+    '043': '043 - RN - IN',
+    '044': '044 - RN - CM',
+    '045': '045 - RN - PS',
+    '046': '046 - RN - EV',
+    '047': '047 - RN - PC1',
+    '048': '048 - RN - AT',
+    '050': '050 - RN - BP',
+    '051': '051 - RN - AF3',
+    '052': '052 - RN - LV3',
+    '053': '053 - RN - AF4',
+    '054': '054 - RN - MC3',
+    '055': '055 - RN - BR',
+    '057': '057 - RN - IP2',
+    '058': '058 - RN - IP1',
+    '059': '059 - RN - MG',
+    '060': '060 - RN - MM',
+    '061': '061 - RN - JG',
+    '097': '097 - RN - CD PA',
+    '098': '098 - RN - OUTLET',
+    '099': '099 - RN - ECOMMERCE',
+    '100': '100 - RN - CD VG',
+}
+
+
+
+def sintetizar_empresa(empresa_raw):
+    """
+    Converte o nome longo do ERP para o nome sintético da loja.
+    Extrai o código dos 3 primeiros dígitos e busca no mapa.
+    Ex: '001 - RN TINTAS E FERR. LTDA - MATRIZ' → '001 - RN - MATRIZ'
+    Se não encontrar no mapa, retorna o código + ' - RN - ???' para não perder a info.
+    """
+    codigo = str(empresa_raw).strip()[:3]
+    return _EMPRESA_MAP.get(codigo, f"{codigo} - RN - ???")
+
+
+def sintetizar_cargo(cargo_raw):
+    """
+    Remove o sufixo de nível/patente do cargo, deixando só o nome base.
+    Exemplos:
+        'GERENTE DE LOJA G4 - III' → 'GERENTE DE LOJA'
+        'VENDEDOR I'               → 'VENDEDOR'
+        'ASSISTENTE COMERCIAL II'  → 'ASSISTENTE COMERCIAL'
+        'COORDENADOR COMERCIAL'    → 'COORDENADOR COMERCIAL'  (sem alteração)
+
+    Padrão removido: espaço + (Gx - )? + algarismo romano no fim da string.
+    """
+    return re.sub(r'\s+(G\d+\s*[-–]\s*)?(I{1,4}|IV|VI{0,3}|IX)\s*$', '', cargo_raw.strip())
 
 
 def excel_serial_para_data(serial):
@@ -17,7 +110,6 @@ def excel_serial_para_data(serial):
     """
     try:
         serial = int(float(str(serial).replace(',', '.')))
-        # O Excel tem um bug: considera 1900 como bissexto. Por isso subtrai 2 ao invés de 1.
         return date(1899, 12, 30) + timedelta(days=serial)
     except (ValueError, TypeError):
         return None
@@ -33,11 +125,9 @@ def parse_data(valor):
 
     valor = str(valor).strip()
 
-    # Tenta número serial do Excel
     if valor.isdigit() and len(valor) == 5:
         return excel_serial_para_data(valor)
 
-    # Tenta formatos de data comuns
     for fmt in ('%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y'):
         try:
             return datetime.strptime(valor, fmt).date()
@@ -61,37 +151,20 @@ def processar_csv(arquivo_texto):
     """
     Processa o conteúdo do CSV exportado do ERP.
 
-    Retorna uma lista de dicts, um por linha válida:
-    {
-        'empresa': str,
-        'codigo': str,
-        'nome': str,
-        'cargo': str,
-        'data_admissao': date|None,
-        'inicio_aquisitivo': date|None,
-        'fim_aquisitivo': date|None,
-        'limite_ideal': date|None,
-        'limite_maximo': date|None,
-        'faltas': Decimal,
-        'dias_direito': Decimal,
-        'dias_gozo': Decimal,
-        'dias_restantes': Decimal,
-        'dias_programados': Decimal,
-    }
+    Retorna lista de dicts prontos para salvar na session (sem objetos date/Decimal —
+    tudo convertido para str/None para ser serializável em JSON).
 
     Peculiaridade do ERP: quando um colaborador tem dois períodos aquisitivos,
-    a segunda linha não repete código/nome/cargo/admissão — deixa em branco.
-    Esse parse preenche esses campos da linha anterior.
+    a segunda linha vem sem código/nome/cargo/empresa — preenche da linha anterior.
     """
     linhas = []
-    ultimo_codigo = ''
-    ultimo_nome = ''
-    ultimo_cargo = ''
-    ultima_empresa = ''
+    ultimo_codigo   = ''
+    ultimo_nome     = ''
+    ultimo_cargo    = ''
+    ultima_empresa  = ''
     ultima_admissao = None
 
-    # Detecta delimitador automaticamente
-    amostra = arquivo_texto[:2000]
+    amostra     = arquivo_texto[:2000]
     delimitador = '\t' if '\t' in amostra else ';' if amostra.count(';') > amostra.count(',') else ','
 
     reader = csv.reader(io.StringIO(arquivo_texto), delimiter=delimitador)
@@ -99,71 +172,73 @@ def processar_csv(arquivo_texto):
     cabecalho_encontrado = False
     for linha in reader:
         if not any(linha):
-            continue  # Linha vazia
+            continue
 
-        # Pula até encontrar o cabeçalho (contém "FUNCIONÁRIO" ou "FUNCIONARIO")
         if not cabecalho_encontrado:
             linha_upper = [c.upper().strip() for c in linha]
             if any('FUNCION' in c for c in linha_upper):
                 cabecalho_encontrado = True
             continue
 
-        # Normaliza quantidade de colunas
         while len(linha) < 15:
             linha.append('')
 
-        empresa         = str(linha[0]).strip()
-        codigo          = str(linha[1]).strip()
-        nome            = str(linha[2]).strip()
-        cargo           = str(linha[3]).strip()
-        data_admissao   = parse_data(linha[4])
-        inicio_aq       = parse_data(linha[5])
-        fim_aq          = parse_data(linha[6])
-        limite_ideal    = parse_data(linha[7])
-        limite_maximo   = parse_data(linha[8])
-        faltas          = parse_decimal(linha[9])
-        dias_direito    = parse_decimal(linha[10])
-        dias_gozo       = parse_decimal(linha[11])
-        dias_restantes  = parse_decimal(linha[12])
-        dias_programados= parse_decimal(linha[13])
+        # Lê os campos brutos
+        empresa_raw      = str(linha[0]).strip()
+        codigo           = str(linha[1]).strip()
+        nome             = str(linha[2]).strip()
+        cargo_raw        = str(linha[3]).strip()
+        data_admissao    = parse_data(linha[4])
+        inicio_aq        = parse_data(linha[5])
+        fim_aq           = parse_data(linha[6])
+        limite_ideal     = parse_data(linha[7])
+        limite_maximo    = parse_data(linha[8])
+        faltas           = parse_decimal(linha[9])
+        dias_direito     = parse_decimal(linha[10])
+        dias_gozo        = parse_decimal(linha[11])
+        dias_restantes   = parse_decimal(linha[12])
+        dias_programados = parse_decimal(linha[13])
 
-        # Se a linha não tem código, é continuação do colaborador anterior
+        # Linha sem código = continuação do colaborador anterior
         if not codigo:
             codigo        = ultimo_codigo
             nome          = ultimo_nome
-            cargo         = ultimo_cargo
-            empresa       = ultima_empresa
+            empresa_raw   = ultima_empresa
+            cargo_raw     = ultimo_cargo
             data_admissao = ultima_admissao
         else:
-            ultimo_codigo  = codigo
-            ultimo_nome    = nome
-            ultimo_cargo   = cargo
-            ultima_empresa = empresa
-            ultima_admissao= data_admissao
+            ultimo_codigo   = codigo
+            ultimo_nome     = nome
+            ultima_empresa  = empresa_raw
+            ultimo_cargo    = cargo_raw
+            ultima_admissao = data_admissao
 
-        # Ignora linhas sem período aquisitivo válido
+        # Normaliza DEPOIS de resolver qual valor usar (próprio ou herdado)
+        empresa = sintetizar_empresa(empresa_raw)
+        cargo   = sintetizar_cargo(cargo_raw)
+
         if not inicio_aq or not fim_aq:
             continue
 
-        # Ignora linhas sem código de colaborador (erro no CSV)
         if not codigo:
             continue
 
+        # Serializa para JSON (session não aceita date nem Decimal)
         linhas.append({
-            'empresa':          empresa,
-            'codigo':           codigo,
-            'nome':             nome,
-            'cargo':            cargo,
-            'data_admissao':    data_admissao,
-            'inicio_aquisitivo':inicio_aq,
-            'fim_aquisitivo':   fim_aq,
-            'limite_ideal':     limite_ideal,
-            'limite_maximo':    limite_maximo,
-            'faltas':           faltas,
-            'dias_direito':     dias_direito,
-            'dias_gozo':        dias_gozo,
-            'dias_restantes':   dias_restantes,
-            'dias_programados': dias_programados,
+            'empresa':           empresa,
+            'codigo':            codigo,
+            'nome':              nome,
+            'cargo':             cargo,
+            'data_admissao':     data_admissao.isoformat() if data_admissao else None,
+            'inicio_aquisitivo': inicio_aq.isoformat(),
+            'fim_aquisitivo':    fim_aq.isoformat(),
+            'limite_ideal':      limite_ideal.isoformat()  if limite_ideal  else None,
+            'limite_maximo':     limite_maximo.isoformat() if limite_maximo else None,
+            'faltas':            str(faltas),
+            'dias_direito':      str(dias_direito),
+            'dias_gozo':         str(dias_gozo),
+            'dias_restantes':    str(dias_restantes),
+            'dias_programados':  str(dias_programados),
         })
 
     return linhas
@@ -172,18 +247,23 @@ def processar_csv(arquivo_texto):
 def analisar_importacao(linhas_csv):
     """
     Compara linhas do CSV com o banco atual.
-    Retorna um relatório com:
-    - novos: colaboradores no CSV mas não no banco
-    - removidos: colaboradores no banco mas não no CSV
-    - existentes: códigos que existem em ambos
+    Retorna conjuntos de códigos + dados extras para o template de confirmação.
     """
     from provisao.models import Colaborador
 
-    codigos_csv = set(l['codigo'] for l in linhas_csv)
+    codigos_csv   = set(l['codigo'] for l in linhas_csv)
     codigos_banco = set(Colaborador.objects.filter(ativo=True).values_list('codigo', flat=True))
 
+    novos     = codigos_csv - codigos_banco
+    removidos = codigos_banco - codigos_csv
+
+    novos_nomes    = {l['codigo']: l['nome'] for l in linhas_csv if l['codigo'] in novos}
+    removidos_objs = Colaborador.objects.filter(codigo__in=removidos)
+
     return {
-        'novos':      codigos_csv - codigos_banco,
-        'removidos':  codigos_banco - codigos_csv,
-        'existentes': codigos_csv & codigos_banco,
+        'novos':          novos,
+        'removidos':      removidos,
+        'existentes':     codigos_csv & codigos_banco,
+        'novos_nomes':    novos_nomes,
+        'removidos_objs': removidos_objs,
     }

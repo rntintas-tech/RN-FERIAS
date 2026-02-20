@@ -491,7 +491,7 @@
  
  /* ---------- Headers ---------- */
  .rennova-page-header {
-   background: var(--primary-gradient);
+   background: var(--secondary-gradient);
    padding: var(--spacing-md) 0;
    margin-bottom: var(--spacing-xl);
    border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);

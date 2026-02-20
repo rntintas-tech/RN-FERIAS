@@ -184,6 +184,7 @@
                     <tr>
                         <th class="col-compacta">Código</th>
                         <th class="col-compacta">Colaborador</th>
+                        <th class="col-compacta">Empresa</th>
                         <th class="col-compacta">Admissão</th>
                         <th class="col-compacta">Cargo</th>
                         <th class="col-compacta">Início Aquisit.</th>
@@ -213,6 +214,11 @@
                                     <td rowspan="{{ colaborador.periodos.count }}"
                                         class="col-compacta fw-semibold">
                                         {{ colaborador.nome }}
+                                    </td>
+                                    <td rowspan="{{ colaborador.periodos.count }}"
+                                        class="col-compacta text-muted"
+                                        style="font-size:0.78rem;">
+                                        {{ colaborador.empresa }}
                                     </td>
                                     <td rowspan="{{ colaborador.periodos.count }}"
                                         class="col-compacta text-muted"
