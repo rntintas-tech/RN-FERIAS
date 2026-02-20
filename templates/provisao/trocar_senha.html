@@ -1,0 +1,119 @@
+{% extends "provisao/base.html" %}
+{% load static %}
+
+{% block title %}Trocar Senha | Provisão de Férias{% endblock %}
+
+{% block content %}
+
+<div class="rennova-page-header mb-4">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="bi bi-key-fill me-2"></i>Trocar Senha
+        </h1>
+        <p>Altere sua senha de acesso ao sistema</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+
+            <div class="login-card">
+
+                <div class="login-header">
+                    <h3><i class="bi bi-shield-lock me-2"></i>Nova senha</h3>
+                    <p>Preencha os três campos abaixo</p>
+                </div>
+
+                <div class="login-body">
+
+                    {% if form.errors %}
+                        <div class="login-error mb-3">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span>Corrija os erros abaixo antes de continuar.</span>
+                        </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Senha atual -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium" style="font-size:0.85rem;">
+                                Senha atual
+                            </label>
+                            <div class="input-icon-wrapper">
+                                <i class="bi bi-lock-fill"></i>
+                                <input type="password"
+                                       name="old_password"
+                                       class="form-control {% if form.old_password.errors %}is-invalid{% endif %}"
+                                       placeholder="Digite sua senha atual"
+                                       autocomplete="current-password">
+                            </div>
+                            {% if form.old_password.errors %}
+                                <div class="text-danger mt-1" style="font-size:0.8rem;">
+                                    {{ form.old_password.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Nova senha -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium" style="font-size:0.85rem;">
+                                Nova senha
+                            </label>
+                            <div class="input-icon-wrapper">
+                                <i class="bi bi-lock-fill"></i>
+                                <input type="password"
+                                       name="new_password1"
+                                       class="form-control {% if form.new_password1.errors %}is-invalid{% endif %}"
+                                       placeholder="Digite a nova senha"
+                                       autocomplete="new-password">
+                            </div>
+                            {% if form.new_password1.errors %}
+                                <div class="text-danger mt-1" style="font-size:0.8rem;">
+                                    {{ form.new_password1.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Confirmar nova senha -->
+                        <div class="mb-4">
+                            <label class="form-label fw-medium" style="font-size:0.85rem;">
+                                Confirmar nova senha
+                            </label>
+                            <div class="input-icon-wrapper">
+                                <i class="bi bi-lock-fill"></i>
+                                <input type="password"
+                                       name="new_password2"
+                                       class="form-control {% if form.new_password2.errors %}is-invalid{% endif %}"
+                                       placeholder="Repita a nova senha"
+                                       autocomplete="new-password">
+                            </div>
+                            {% if form.new_password2.errors %}
+                                <div class="text-danger mt-1" style="font-size:0.8rem;">
+                                    {{ form.new_password2.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <button type="submit" class="btn-login">
+                            <i class="bi bi-check-circle-fill me-2"></i>Salvar nova senha
+                        </button>
+
+                    </form>
+
+                    <div class="login-footer mt-3">
+                        <a href="{% url 'index' %}" class="text-muted" style="font-size:0.82rem;">
+                            <i class="bi bi-arrow-left me-1"></i>Voltar para a tabela
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

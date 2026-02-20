@@ -16,89 +16,226 @@
 
     <style>
         /*
-         * Página de login standalone — não usa base.html pois não tem navbar.
-         * Fundo usa o mesmo gradiente primário do design system.
+         * Layout split: tela dividida em duas colunas de altura total.
+         * Esquerda: imagem de férias com overlay gradiente azul.
+         * Direita: formulário de login centralizado em fundo branco.
+         * Em mobile (< lg) o painel da imagem some.
          */
+
+        * { box-sizing: border-box; }
+
+        html { height: 100%; }
+
         body {
+            margin: 0;
             min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background: #f5f6fa;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Inter', var(--font-family-base);
-            background: var(--primary-gradient);
-            padding: 1rem;
         }
 
-        .login-wrapper {
+        /* ── PAINEL ESQUERDO: imagem + overlay ─────────────────── */
+
+        .painel-imagem {
+            flex: 0 0 68%;
+            position: relative;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+
+        /* Overlay escuro + gradiente azul por cima da imagem */
+        .painel-imagem::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(30, 60, 120, 0.72) 0%,
+                rgba(58, 123, 213, 0.55) 60%,
+                rgba(20, 40, 90, 0.75) 100%
+            );
+            z-index: 1;
+            transition: opacity 0.6s ease;
+        }
+
+        /* Remove o overlay azul ao passar o mouse — revela a foto original */
+        .painel-imagem:hover::before {
+            opacity: 0;
+        }
+
+        .painel-imagem .bg-img {
+            position: absolute;
+            inset: 0;
             width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: right center;
+            animation: zoomIn 12s ease forwards;
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(1.08); }
+            to   { transform: scale(1); }
+        }
+
+        /* Conteúdo textual sobre a imagem */
+        .painel-imagem-conteudo {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 3rem;
+        }
+
+        .painel-tagline {
+            color: rgba(255,255,255,0.95);
+        }
+
+        .painel-tagline .icone-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.18);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 7px 18px;
+            font-size: 0.88rem;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .painel-tagline h2 {
+            font-size: 2.6rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0.75rem;
+            color: #fff;
+        }
+
+        .painel-tagline p {
+            font-size: 1.05rem;
+            color: rgba(255,255,255,0.8);
+            margin: 0;
             max-width: 420px;
-            animation: fadeIn 0.5s ease forwards;
+            line-height: 1.6;
         }
 
-        /* Logo/marca acima do card */
-        .login-brand {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            color: rgba(255, 255, 255, 0.9);
+        /* Logo RN Tintas no topo esquerdo */
+        .painel-logo {
+            position: absolute;
+            top: 1.75rem;
+            left: 2rem;
+            z-index: 3;
         }
 
-        .login-brand .brand-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(8px);
+        .painel-logo img {
+            height: 52px;
+            filter: brightness(0) invert(1); /* Deixa o logo branco */
+            opacity: 0.9;
+        }
+
+        /* Fallback se logo não existir */
+        .painel-logo span {
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── PAINEL DIREITO: formulário ─────────────────────────── */
+
+        .painel-form {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 1.8rem;
+            padding: 2rem 1.5rem;
+            background: #fff;
+            min-height: 100vh;
         }
 
-        .login-brand h1 {
-            font-size: 1.4rem;
-            font-weight: 700;
+        .form-wrapper {
+            width: 100%;
+            max-width: 380px;
+            animation: slideIn 0.45s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Cabeçalho do formulário */
+        .form-header {
+            margin-bottom: 2rem;
+        }
+
+        .form-header .form-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
             color: #fff;
+            box-shadow: 0 4px 14px rgba(58, 123, 213, 0.35);
+        }
+
+        .form-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
             margin-bottom: 0.25rem;
         }
 
-        .login-brand p {
+        .form-header p {
             font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.75);
+            color: var(--text-muted);
             margin: 0;
         }
 
-        /* Input com ícone à esquerda */
+        /* Inputs com ícone à esquerda — reutiliza padrão do design system */
         .input-icon-wrapper {
             position: relative;
         }
 
-        .input-icon-wrapper .bi {
+        /* Apenas o ícone decorativo à esquerda — não o botão toggle */
+        .input-icon-wrapper > .bi {
             position: absolute;
             left: 14px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
-            font-size: 1rem;
+            font-size: 0.95rem;
             pointer-events: none;
         }
 
         .input-icon-wrapper input {
-            padding-left: 2.5rem;
+            padding-left: 2.6rem;
+            padding-right: 2.6rem; /* reserva espaço pro botão toggle */
             border-radius: var(--border-radius-md);
             border: 1.5px solid var(--border-color);
             height: 46px;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
         }
 
         .input-icon-wrapper input:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(58, 123, 213, 0.15);
+            box-shadow: 0 0 0 3px rgba(58, 123, 213, 0.12);
             outline: none;
         }
 
-        /* Botão toggle de senha */
+        /* Botão de mostrar/ocultar senha */
         .btn-toggle-password {
             position: absolute;
             right: 10px;
@@ -108,136 +245,169 @@
             border: none;
             color: var(--text-muted);
             cursor: pointer;
-            padding: 4px;
+            padding: 4px 6px;
             font-size: 1rem;
+            line-height: 1;
             transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
         }
 
         .btn-toggle-password:hover { color: var(--primary-color); }
 
-        /* Mensagem de erro do Django */
+        /* Alerta de erro de autenticação */
         .login-error {
-            background: rgba(220, 53, 69, 0.1);
+            background: rgba(220, 53, 69, 0.08);
             border-left: 4px solid var(--danger-color);
             color: var(--danger-color);
             border-radius: var(--border-radius-sm);
             padding: 10px 14px;
-            font-size: 0.85rem;
+            font-size: 0.83rem;
             display: flex;
             align-items: center;
             gap: 8px;
+            margin-bottom: 1.25rem;
         }
 
-        /* Rodapé do card */
-        .login-footer {
-            text-align: center;
-            padding-top: 1rem;
+        /* Rodapé do formulário */
+        .form-footer {
             border-top: 1px solid var(--border-color);
-            margin-top: 0.5rem;
+            padding-top: 1.25rem;
+            margin-top: 1.5rem;
             font-size: 0.78rem;
             color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* ── RESPONSIVO: esconde imagem em telas pequenas ───────── */
+        @media (max-width: 991.98px) {
+            .painel-imagem { display: none; }
+            body { background: #f5f6fa; }
+            .painel-form { background: transparent; }
+            .form-wrapper { 
+                background: #fff;
+                border-radius: var(--border-radius-lg);
+                box-shadow: var(--box-shadow-md);
+                padding: 2rem;
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="login-wrapper">
+    <!-- ═══════════════ PAINEL ESQUERDO — Imagem ═══════════════ -->
+    <div class="painel-imagem d-none d-lg-block">
 
-    <!-- Marca / identificação do sistema -->
-    <div class="login-brand">
-        <div class="brand-icon">
-            <i class="bi bi-calendar-check-fill text-white"></i>
+        <!-- Logo no topo -->
+        <div class="painel-logo">
+            <img
+                src="{% static 'assets/img/RN-LOGO-INSTITUCIONAL.png' %}"
+                alt="RN Tintas"
+                onerror="this.style.display='none';this.nextElementSibling.style.display='inline';"
+            >
+            <span style="display:none;">RN Tintas</span>
         </div>
-        <h1>Provisão de Férias</h1>
-        <p>RN Tintas · Acesso restrito ao RH</p>
+
+        <!-- Imagem com efeito de zoom suave -->
+        <div class="bg-img"
+             style="background-image: url('{% static 'assets/img/renan_ferias.png' %}');">
+        </div>
+
+        <!-- Texto sobre a imagem — canto inferior esquerdo -->
+        <div class="painel-imagem-conteudo">
+            <div class="painel-tagline">
+                <div class="icone-badge">
+                    <i class="bi bi-calendar-check-fill"></i>
+                    Gestão de Férias
+                </div>
+                <h2>Planejamento<br>que faz a diferença.</h2>
+                <p>Controle prazos, programe períodos e mantenha o time descansado — tudo em um só lugar.</p>
+            </div>
+        </div>
     </div>
 
-    <!-- Card de login (classes do design system) -->
-    <div class="login-card">
+    <!-- ═══════════════ PAINEL DIREITO — Formulário ══════════════ -->
+    <div class="painel-form">
+        <div class="form-wrapper">
 
-        <div class="login-header">
-            <h3>Entrar no sistema</h3>
-            <p>Use suas credenciais de acesso</p>
-        </div>
+            <!-- Cabeçalho -->
+            <div class="form-header">
+                <div class="form-icon">
+                    <i class="bi bi-calendar-check-fill"></i>
+                </div>
+                <h2>Bem-vindo de volta</h2>
+                <p>Acesse com suas credenciais do RH</p>
+            </div>
 
-        <div class="login-body">
-
-            <!-- Erros de autenticação vindos do Django -->
+            <!-- Erro de autenticação -->
             {% if form.errors %}
-                <div class="login-error mb-3">
+                <div class="login-error">
                     <i class="bi bi-exclamation-circle-fill"></i>
                     <span>Usuário ou senha incorretos. Tente novamente.</span>
                 </div>
             {% endif %}
 
-            <!-- Mensagem quando redirecionado por @login_required -->
+            <!-- Alerta quando redirecionado por @login_required -->
             {% if request.GET.next %}
-                <div class="login-error mb-3" style="border-color: var(--warning-color); color: #856404; background: rgba(255,193,7,0.1);">
+                <div class="login-error mb-3"
+                     style="border-color:var(--warning-color);color:#856404;background:rgba(255,193,7,0.08);">
                     <i class="bi bi-lock-fill"></i>
                     <span>Faça login para continuar.</span>
                 </div>
             {% endif %}
 
+            <!-- Formulário -->
             <form method="post" novalidate>
                 {% csrf_token %}
 
-                <!-- Campo: usuário -->
+                <!-- Usuário -->
                 <div class="mb-3">
-                    <label class="form-label fw-medium" style="font-size:0.85rem;">
+                    <label class="form-label fw-medium" style="font-size:0.82rem;color:var(--text-color);">
                         Usuário
                     </label>
                     <div class="input-icon-wrapper">
                         <i class="bi bi-person-fill"></i>
-                        <input
-                            type="text"
-                            name="username"
-                            class="form-control"
-                            placeholder="Digite seu usuário"
-                            autofocus
-                            autocomplete="username"
-                            value="{{ form.username.value|default:'' }}"
-                        >
+                        <input type="text"
+                               name="username"
+                               placeholder="Digite seu usuário"
+                               autofocus
+                               autocomplete="username"
+                               value="{{ form.username.value|default:'' }}">
                     </div>
                 </div>
 
-                <!-- Campo: senha com toggle de visibilidade -->
+                <!-- Senha -->
                 <div class="mb-4">
-                    <label class="form-label fw-medium" style="font-size:0.85rem;">
+                    <label class="form-label fw-medium" style="font-size:0.82rem;color:var(--text-color);">
                         Senha
                     </label>
                     <div class="input-icon-wrapper">
                         <i class="bi bi-lock-fill"></i>
-                        <input
-                            type="password"
-                            name="password"
-                            id="campo-senha"
-                            class="form-control"
-                            placeholder="Digite sua senha"
-                            autocomplete="current-password"
-                        >
-                        <button
-                            type="button"
-                            class="btn-toggle-password"
-                            onclick="toggleSenha()"
-                            aria-label="Mostrar ou ocultar senha"
-                        >
+                        <input type="password"
+                               name="password"
+                               id="campo-senha"
+                               placeholder="Digite sua senha"
+                               autocomplete="current-password">
+                        <button type="button"
+                                class="btn-toggle-password"
+                                onclick="toggleSenha()"
+                                aria-label="Mostrar ou ocultar senha">
                             <i class="bi bi-eye-slash" id="icone-senha"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Campo oculto: para onde redirecionar após login -->
                 {% if request.GET.next %}
                     <input type="hidden" name="next" value="{{ request.GET.next }}">
                 {% endif %}
 
-                <button type="submit" class="btn-login">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>
-                    Entrar
+                <button type="submit" class="btn-login w-100">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Entrar
                 </button>
             </form>
 
-            <div class="login-footer mt-3">
+            <!-- Rodapé -->
+            <div class="form-footer">
                 <i class="bi bi-shield-lock me-1"></i>
                 Sistema interno — acesso somente para colaboradores autorizados
             </div>
@@ -245,20 +415,17 @@
         </div>
     </div>
 
-</div>
-
-<script>
-    /** Alterna visibilidade do campo de senha. */
-    function toggleSenha() {
-        const campo = document.getElementById('campo-senha');
-        const icone = document.getElementById('icone-senha');
-        const visivel = campo.type === 'text';
-
-        campo.type = visivel ? 'password' : 'text';
-        icone.className = visivel ? 'bi bi-eye-slash' : 'bi bi-eye';
-        campo.focus();
-    }
-</script>
+    <script>
+        /** Alterna visibilidade do campo senha. */
+        function toggleSenha() {
+            const campo = document.getElementById('campo-senha');
+            const icone = document.getElementById('icone-senha');
+            const visivel = campo.type === 'text';
+            campo.type = visivel ? 'password' : 'text';
+            icone.className = visivel ? 'bi bi-eye-slash' : 'bi bi-eye';
+            campo.focus();
+        }
+    </script>
 
 </body>
 </html>

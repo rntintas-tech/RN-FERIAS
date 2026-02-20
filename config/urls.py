@@ -24,6 +24,15 @@ urlpatterns = [
         auth_views.LogoutView.as_view(next_page='login'),
         name='logout',
     ),
+    
+    # PasswordChangeView: valida senha atual + define nova + confirma
+    # success_url redireciona para index após troca bem-sucedida
+    path('trocar-senha/',
+         auth_views.PasswordChangeView.as_view(
+             template_name='provisao/trocar_senha.html',
+             success_url='/',
+         ),
+         name='trocar_senha'),
 
     path('', include('provisao.urls')),
 ]
