@@ -16,10 +16,10 @@
 
     <style>
         /*
-         * Layout split: tela dividida em duas colunas de altura total.
+         * Layout split: tela dividida em duas colunas de altura total (desktop).
          * Esquerda: imagem de férias com overlay gradiente azul.
          * Direita: formulário de login centralizado em fundo branco.
-         * Em mobile (< lg) o painel da imagem some.
+         * Em mobile (< lg): stack vertical — imagem em cima, formulário embaixo.
          */
 
         * { box-sizing: border-box; }
@@ -279,16 +279,76 @@
             text-align: center;
         }
 
-        /* ── RESPONSIVO: esconde imagem em telas pequenas ───────── */
+        /* ── RESPONSIVO: layout vertical no mobile ───────── */
         @media (max-width: 991.98px) {
-            .painel-imagem { display: none; }
-            body { background: #f5f6fa; }
-            .painel-form { background: transparent; }
+            body { 
+                flex-direction: column;
+                background: #f5f6fa;
+            }
+
+            .painel-imagem { 
+                flex: 0 0 auto;
+                height: 280px;
+                min-height: 280px;
+                display: block !important;
+            }
+
+            .painel-imagem .bg-img {
+                background-position: center center;
+            }
+
+            .painel-imagem-conteudo {
+                padding: 1.5rem;
+                justify-content: flex-end;
+            }
+
+            .painel-tagline h2 {
+                font-size: 1.5rem;
+            }
+
+            .painel-tagline p {
+                font-size: 0.9rem;
+            }
+
+            .painel-form { 
+                flex: 1;
+                background: #f5f6fa;
+                box-shadow: none;
+                border-radius: 0;
+                min-height: auto;
+                padding: 1.5rem 1rem;
+            }
+
             .form-wrapper { 
                 background: #fff;
                 border-radius: var(--border-radius-lg);
                 box-shadow: var(--box-shadow-md);
                 padding: 2rem;
+                max-width: 100%;
+            }
+        }
+
+        /* Ajustes para dispositivos bem pequenos (< 380px) */
+        @media (max-width: 380px) {
+            .form-wrapper {
+                padding: 1.5rem;
+            }
+
+            .painel-imagem {
+                height: 220px;
+            }
+
+            .painel-imagem-conteudo {
+                padding: 1rem;
+            }
+
+            .painel-tagline h2 {
+                font-size: 1.25rem;
+            }
+
+            .painel-tagline .icone-badge {
+                font-size: 0.75rem;
+                padding: 6px 14px;
             }
         }
     </style>
@@ -416,14 +476,21 @@
     </div>
 
     <script>
-        /** Alterna visibilidade do campo senha. */
+        /**
+         * Alterna visibilidade do campo senha.
+         * Muda o type entre 'password' e 'text' + alterna o ícone do olho.
+         */
         function toggleSenha() {
             const campo = document.getElementById('campo-senha');
             const icone = document.getElementById('icone-senha');
-            const visivel = campo.type === 'text';
-            campo.type = visivel ? 'password' : 'text';
-            icone.className = visivel ? 'bi bi-eye-slash' : 'bi bi-eye';
-            campo.focus();
+
+            if (campo.type === 'password') {
+                campo.type = 'text';
+                icone.className = 'bi bi-eye';
+            } else {
+                campo.type = 'password';
+                icone.className = 'bi bi-eye-slash';
+            }
         }
     </script>
 
