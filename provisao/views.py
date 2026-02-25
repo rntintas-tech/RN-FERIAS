@@ -10,6 +10,7 @@ from decimal import Decimal, InvalidOperation
 from .models import Colaborador, PeriodoAquisitivo, ParcelaFerias, ImportacaoProvisao
 from .utils import processar_csv, analisar_importacao
 
+
 @login_required
 def index(request):
     """Tela principal: tabela de colaboradores com seus períodos e parcelas de férias."""
@@ -20,24 +21,65 @@ def index(request):
         .order_by('nome')
     )
 
-    busca = request.GET.get('busca', '').strip()
+    # ── Filtros via GET ──────────────────────────────────────────────────────
+    busca          = request.GET.get('busca', '').strip()
+    filtro_empresa = request.GET.get('empresa', '').strip()
+    filtro_cargo   = request.GET.get('cargo', '').strip()
+    filtro_status  = request.GET.get('status', '').strip()  # 'danger' | 'warning' | 'ok'
+
     if busca:
         colaboradores = colaboradores.filter(nome__icontains=busca) | \
                         colaboradores.filter(cargo__icontains=busca)
 
-    total = colaboradores.count()
-    urgentes = sum(1 for c in colaboradores for p in c.periodos.all() if p.status_limite == 'danger')
-    atencao  = sum(1 for c in colaboradores for p in c.periodos.all() if p.status_limite == 'warning')
+    if filtro_empresa:
+        colaboradores = colaboradores.filter(empresa=filtro_empresa)
+
+    if filtro_cargo:
+        colaboradores = colaboradores.filter(cargo=filtro_cargo)
+
+    # Status é uma @property calculada no model — filtra em Python
+    if filtro_status:
+        colaboradores = [
+            c for c in colaboradores
+            if any(p.status_limite == filtro_status for p in c.periodos.all())
+        ]
+
+    # ── Métricas para os stat cards ──────────────────────────────────────────
+    # list() garante avaliação única do queryset (ou lista, se status filtrado)
+    colaboradores_list = list(colaboradores)
+    total    = len(colaboradores_list)
+    urgentes = sum(1 for c in colaboradores_list for p in c.periodos.all() if p.status_limite == 'danger')
+    atencao  = sum(1 for c in colaboradores_list for p in c.periodos.all() if p.status_limite == 'warning')
+
+    # ── Opções para os selects de filtro ────────────────────────────────────
+    # Sempre busca do banco inteiro (ativos) para os selects não perderem opções
+    todas_empresas = (
+        Colaborador.objects.filter(ativo=True)
+        .values_list('empresa', flat=True)
+        .order_by('empresa')
+        .distinct()
+    )
+    todos_cargos = (
+        Colaborador.objects.filter(ativo=True)
+        .values_list('cargo', flat=True)
+        .order_by('cargo')
+        .distinct()
+    )
 
     ultima_importacao = ImportacaoProvisao.objects.first()
 
     return render(request, 'provisao/index.html', {
-        'colaboradores':    colaboradores,
-        'busca':            busca,
-        'total':            total,
-        'urgentes':         urgentes,
-        'atencao':          atencao,
-        'ultima_importacao': ultima_importacao,
+        'colaboradores':      colaboradores_list,
+        'busca':              busca,
+        'filtro_empresa':     filtro_empresa,
+        'filtro_cargo':       filtro_cargo,
+        'filtro_status':      filtro_status,
+        'todas_empresas':     todas_empresas,
+        'todos_cargos':       todos_cargos,
+        'total':              total,
+        'urgentes':           urgentes,
+        'atencao':            atencao,
+        'ultima_importacao':  ultima_importacao,
     })
 
 
@@ -47,7 +89,7 @@ def importar(request):
     if request.method == 'GET':
         return render(request, 'provisao/importar.html')
 
-    arquivo  = request.FILES.get('arquivo')
+    arquivo   = request.FILES.get('arquivo')
     texto_csv = request.POST.get('texto_csv', '').strip()
 
     if arquivo:
@@ -72,13 +114,13 @@ def importar(request):
     request.session['linhas_csv'] = linhas
 
     return render(request, 'provisao/confirmar_importacao.html', {
-        'linhas':          linhas,
-        'total_linhas':    len(linhas),
-        'novos':           analise['novos'],
-        'removidos':       analise['removidos'],
+        'linhas':           linhas,
+        'total_linhas':     len(linhas),
+        'novos':            analise['novos'],
+        'removidos':        analise['removidos'],
         'existentes_count': len(analise['existentes']),
-        'novos_nomes':     analise['novos_nomes'],
-        'removidos_objs':  analise['removidos_objs'],
+        'novos_nomes':      analise['novos_nomes'],
+        'removidos_objs':   analise['removidos_objs'],
     })
 
 
@@ -128,13 +170,11 @@ def confirmar_importacao(request):
             else:
                 colaborador.nome    = l['nome']
                 colaborador.cargo   = l['cargo']
-                colaborador.empresa = l['empresa']  # ← adicionar essa linha
+                colaborador.empresa = l['empresa']
                 colaborador.ativo   = True
                 colaborador.save()
                 atualizados_count += 1
 
-            # Preserva parcelas de férias: get_or_create garante que registros
-            # existentes (com parcelas vinculadas) não sejam recriados
             periodo, periodo_criado = PeriodoAquisitivo.objects.get_or_create(
                 colaborador=colaborador,
                 inicio_aquisitivo=inicio_aq,
@@ -151,7 +191,6 @@ def confirmar_importacao(request):
             )
 
             if not periodo_criado:
-                # Atualiza apenas dados do ERP — parcelas de férias são preservadas
                 periodo.fim_aquisitivo   = fim_aq
                 periodo.limite_ideal     = str_para_date(l['limite_ideal'])
                 periodo.limite_maximo    = str_para_date(l['limite_maximo'])
@@ -165,7 +204,7 @@ def confirmar_importacao(request):
 
         if remover_antigos:
             codigos_csv = set(l['codigo'] for l in linhas)
-            removidos = Colaborador.objects.filter(ativo=True).exclude(codigo__in=codigos_csv)
+            removidos   = Colaborador.objects.filter(ativo=True).exclude(codigo__in=codigos_csv)
             removidos_count = removidos.count()
             removidos.update(ativo=False)
 
@@ -195,7 +234,7 @@ def salvar_parcela(request):
     Retorna a lista atualizada de parcelas do período.
     """
     try:
-        data = json.loads(request.body)
+        data   = json.loads(request.body)
         periodo = get_object_or_404(PeriodoAquisitivo, pk=data['periodo_id'])
 
         mes = data.get('mes_ferias', '').strip()
@@ -203,20 +242,19 @@ def salvar_parcela(request):
             return JsonResponse({'ok': False, 'erro': 'Mês inválido. Use o formato YYYY-MM.'}, status=400)
 
         dias_raw = data.get('dias', '').strip() if data.get('dias') else None
-        dias = None
+        dias     = None
         if dias_raw:
             try:
                 dias = Decimal(dias_raw)
             except InvalidOperation:
                 return JsonResponse({'ok': False, 'erro': 'Dias inválido.'}, status=400)
 
-        # Valida o limite de dias apenas quando o campo dias é informado
         if dias is not None and periodo.dias_direito:
             ja_usados = sum(p.dias for p in periodo.parcelas.all() if p.dias is not None)
             if ja_usados + dias > periodo.dias_direito:
                 disponiveis = periodo.dias_direito - ja_usados
                 return JsonResponse({
-                    'ok': False,
+                    'ok':   False,
                     'erro': f'Limite excedido. Disponível: {int(disponiveis)}d de {int(periodo.dias_direito)}d ({int(ja_usados)}d já usados).'
                 }, status=400)
 
@@ -227,15 +265,15 @@ def salvar_parcela(request):
             observacao=data.get('observacao', '').strip(),
         )
 
-        parcelas = list(periodo.parcelas.all().order_by('mes_ferias'))
+        parcelas    = list(periodo.parcelas.all().order_by('mes_ferias'))
         dias_usados = sum(p.dias for p in parcelas if p.dias is not None)
         return JsonResponse({
-            'ok':            True,
-            'parcelas':      [p.to_dict() for p in parcelas],
-            'dias_usados':   float(dias_usados),
-            'dias_direito':  float(periodo.dias_direito or 0),
-            'status_badge':  list(periodo.status_badge),   # ['bg-danger', '⚠ URGENTE']
-            'status_limite': periodo.status_limite,        # 'danger' | 'warning' | 'ok'
+            'ok':           True,
+            'parcelas':     [p.to_dict() for p in parcelas],
+            'dias_usados':  float(dias_usados),
+            'dias_direito': float(periodo.dias_direito or 0),
+            'status_badge': list(periodo.status_badge),
+            'status_limite': periodo.status_limite,
         })
 
     except Exception as e:
@@ -251,21 +289,21 @@ def deletar_parcela(request):
     Retorna a lista atualizada de parcelas do período.
     """
     try:
-        data = json.loads(request.body)
-        parcela = get_object_or_404(ParcelaFerias, pk=data['parcela_id'])
+        data       = json.loads(request.body)
+        parcela    = get_object_or_404(ParcelaFerias, pk=data['parcela_id'])
         periodo_id = parcela.periodo_id
         parcela.delete()
 
-        periodo = get_object_or_404(PeriodoAquisitivo, pk=periodo_id)
-        parcelas = list(ParcelaFerias.objects.filter(periodo_id=periodo_id).order_by('mes_ferias'))
+        periodo     = get_object_or_404(PeriodoAquisitivo, pk=periodo_id)
+        parcelas    = list(ParcelaFerias.objects.filter(periodo_id=periodo_id).order_by('mes_ferias'))
         dias_usados = sum(p.dias for p in parcelas if p.dias is not None)
         return JsonResponse({
-            'ok':            True,
-            'parcelas':      [p.to_dict() for p in parcelas],
-            'dias_usados':   float(dias_usados),
-            'dias_direito':  float(periodo.dias_direito or 0),
-            'status_badge':  list(periodo.status_badge),   # ['bg-danger', '⚠ URGENTE']
-            'status_limite': periodo.status_limite,        # 'danger' | 'warning' | 'ok'
+            'ok':           True,
+            'parcelas':     [p.to_dict() for p in parcelas],
+            'dias_usados':  float(dias_usados),
+            'dias_direito': float(periodo.dias_direito or 0),
+            'status_badge': list(periodo.status_badge),
+            'status_limite': periodo.status_limite,
         })
 
     except Exception as e:

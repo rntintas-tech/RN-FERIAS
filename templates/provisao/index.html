@@ -44,7 +44,6 @@
 {% endblock %}
 
 
-<!-- Page header: gradiente azul primário, igual ao padrão RennovaApp -->
 {% block page_header %}
 <div class="rennova-page-header">
     <div class="container-fluid px-4">
@@ -111,30 +110,62 @@
 
 </div>
 
-<!-- ═══ BARRA DE BUSCA ═══ -->
+<!-- ═══ PAINEL DE FILTROS ═══ -->
 <div class="rennova-card mb-3 animate-up" style="animation-delay:0.3s">
     <div class="rennova-card-body py-2">
-        <form method="get" class="d-flex align-items-center gap-2 flex-wrap">
-            <div class="input-group" style="max-width:380px;">
+        <form method="get" class="d-flex align-items-end gap-2 flex-wrap">
+
+            <!-- Busca por nome / cargo -->
+            <div class="input-group" style="max-width:280px;">
                 <span class="input-group-text bg-white border-end-0">
                     <i class="bi bi-search text-muted"></i>
                 </span>
                 <input type="text" name="busca"
                        class="form-control border-start-0 ps-0"
-                       placeholder="Buscar por nome ou cargo..."
+                       placeholder="Buscar por nome..."
                        value="{{ busca }}">
-                <button class="btn btn-outline-secondary" type="submit">Buscar</button>
-                {% if busca %}
-                    <a href="{% url 'index' %}" class="btn btn-outline-danger">
-                        <i class="bi bi-x-lg"></i>
-                    </a>
-                {% endif %}
             </div>
-            {% if busca %}
-                <span class="badge-rennova badge-rennova-primary">
+
+            <!-- Filtro empresa -->
+            <select name="empresa" class="form-select form-select-sm" style="max-width:200px;">
+                <option value="">Todas as empresas</option>
+                {% for emp in todas_empresas %}
+                    <option value="{{ emp }}" {% if filtro_empresa == emp %}selected{% endif %}>
+                        {{ emp }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <!-- Filtro cargo -->
+            <select name="cargo" class="form-select form-select-sm" style="max-width:220px;">
+                <option value="">Todos os cargos</option>
+                {% for cargo in todos_cargos %}
+                    <option value="{{ cargo }}" {% if filtro_cargo == cargo %}selected{% endif %}>
+                        {{ cargo }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <!-- Filtro status -->
+            <select name="status" class="form-select form-select-sm" style="max-width:160px;">
+                <option value="">Todos os status</option>
+                <option value="danger"  {% if filtro_status == 'danger'  %}selected{% endif %}>⚠ Urgente</option>
+                <option value="warning" {% if filtro_status == 'warning' %}selected{% endif %}>⏰ Atenção</option>
+                <option value="ok"      {% if filtro_status == 'ok'      %}selected{% endif %}>✔ OK</option>
+            </select>
+
+            <button class="btn btn-sm btn-outline-secondary" type="submit">Filtrar</button>
+
+            <!-- Limpar filtros: só aparece se algum filtro estiver ativo -->
+            {% if busca or filtro_empresa or filtro_cargo or filtro_status %}
+                <a href="{% url 'index' %}" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-x-lg me-1"></i>Limpar
+                </a>
+                <span class="badge-rennova badge-rennova-primary align-self-center">
                     {{ total }} resultado{{ total|pluralize }}
                 </span>
             {% endif %}
+
         </form>
     </div>
 </div>
@@ -142,7 +173,6 @@
 <!-- ═══ TABELA PRINCIPAL ═══ -->
 <div class="rennova-card animate-up" style="animation-delay:0.38s">
 
-    <!-- Cabeçalho do card: título + instrução -->
     <div class="rennova-card-header py-2">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <span class="d-flex align-items-center gap-2 fw-semibold">
@@ -154,158 +184,151 @@
             </small>
         </div>
 
-        <!-- Legenda de status: mesma cor do thead para continuidade visual -->
         <div class="d-flex gap-3 flex-wrap mt-2" style="font-size:0.77rem;color:rgba(255,255,255,0.9);">
             <span>
                 <span class="badge bg-danger" style="font-size:0.7rem;">⚠ URGENTE</span>
-                — limite máximo em ≤ 60 dias
+                passou do limite máximo
             </span>
             <span>
-                <span class="badge bg-warning text-dark" style="font-size:0.7rem;">⏰ Atenção</span>
-                — limite máximo em ≤ 90 dias
+                <span class="badge bg-warning text-dark" style="font-size:0.7rem;">⏰ ATENÇÃO</span>
+                prazo se aproximando
             </span>
             <span>
-                <span class="badge bg-success" style="font-size:0.7rem;">✓ OK</span>
-                — dentro do prazo ou férias completas
-            </span>
-            <span>
-                <span class="badge-parcela badge-parcela-atual" style="font-size:0.7rem;">Mês atual</span>
-            </span>
-            <span>
-                <span class="badge-parcela badge-parcela-passada" style="font-size:0.7rem;">Já passou</span>
+                <span class="badge bg-success" style="font-size:0.7rem;">✔ OK</span>
+                dentro do prazo
             </span>
         </div>
     </div>
 
-    <div class="rennova-card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-bordered table-ferias mb-0">
-                <thead>
-                    <tr>
-                        <th class="col-compacta">Código</th>
-                        <th class="col-compacta">Colaborador</th>
-                        <th class="col-compacta">Empresa</th>
-                        <th class="col-compacta">Admissão</th>
-                        <th class="col-compacta">Cargo</th>
-                        <th class="col-compacta">Início Aquisit.</th>
-                        <th class="col-compacta">Limite Ideal</th>
-                        <th class="col-compacta">Limite Máximo</th>
-                        <th class="col-compacta text-center">Dir.</th>
-                        <th class="col-compacta text-center">Gozo</th>
-                        <th class="col-compacta text-center">Rest.</th>
-                        <th>Férias Agendadas</th>
-                        <th class="col-compacta text-center">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for colaborador in colaboradores %}
-                        {% for periodo in colaborador.periodos.all %}
-                            {% with badge=periodo.status_badge %}
+    <div class="table-responsive">
+        <table class="table table-ferias mb-0">
+            <thead>
+                <tr>
+                    <th class="col-compacta">Cód.</th>
+                    <th class="col-compacta">Nome</th>
+                    <th class="col-compacta">Empresa</th>
+                    <th class="col-compacta">Admissão</th>
+                    <th class="col-compacta">Cargo</th>
+                    <th class="col-compacta">Período Aquisitivo</th>
+                    <th class="col-compacta">Limite Ideal</th>
+                    <th class="col-compacta">Limite Máx.</th>
+                    <th class="col-compacta text-center">Direito</th>
+                    <th class="col-compacta text-center">Gozo</th>
+                    <th class="col-compacta text-center">Restante</th>
+                    <th>Férias Agendadas</th>
+                    <th class="col-compacta text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
 
-                            <tr id="tr-{{ periodo.id }}"
-                                class="{% if periodo.status_limite == 'danger' %}tr-danger{% elif periodo.status_limite == 'warning' %}tr-warning{% endif %}">
+                {% for colaborador in colaboradores %}
+                    {% for periodo in colaborador.periodos.all %}
+                        {% with badge=periodo.status_badge %}
+                        <tr id="tr-{{ periodo.id }}"
+                            class="{% if periodo.status_limite == 'danger' %}tr-danger{% elif periodo.status_limite == 'warning' %}tr-warning{% endif %}">
 
-                                {% if forloop.first %}
-                                    <td rowspan="{{ colaborador.periodos.count }}"
-                                        class="col-compacta fw-semibold text-muted"
-                                        style="font-size:0.78rem;">
-                                        {{ colaborador.codigo }}
-                                    </td>
-                                    <td rowspan="{{ colaborador.periodos.count }}"
-                                        class="col-compacta fw-semibold">
-                                        {{ colaborador.nome }}
-                                    </td>
-                                    <td rowspan="{{ colaborador.periodos.count }}"
-                                        class="col-compacta text-muted"
-                                        style="font-size:0.78rem;">
-                                        {{ colaborador.empresa }}
-                                    </td>
-                                    <td rowspan="{{ colaborador.periodos.count }}"
-                                        class="col-compacta text-muted"
-                                        style="font-size:0.78rem;">
-                                        {{ colaborador.data_admissao|date:"d/m/Y"|default:"—" }}
-                                    </td>
-                                    <td rowspan="{{ colaborador.periodos.count }}"
-                                        class="col-compacta text-muted"
-                                        style="font-size:0.78rem;">
-                                        {{ colaborador.cargo }}
-                                    </td>
-                                {% endif %}
-
-                                <td class="col-compacta">{{ periodo.inicio_aquisitivo|date:"d/m/Y" }}</td>
-                                <td class="col-compacta">{{ periodo.limite_ideal|date:"d/m/Y"|default:"—" }}</td>
-                                <td class="col-compacta {% if periodo.status_limite == 'warning' or periodo.status_limite == 'danger' %}text-danger fw-semibold{% endif %}">
-                                    {{ periodo.limite_maximo|date:"d/m/Y"|default:"—" }}
+                            {% if forloop.first %}
+                                <td rowspan="{{ colaborador.periodos.count }}"
+                                    class="col-compacta fw-semibold text-muted"
+                                    style="font-size:0.78rem;">
+                                    {{ colaborador.codigo }}
                                 </td>
-                                <td class="col-compacta text-center">{{ periodo.dias_direito|floatformat:0 }}</td>
-                                <td class="col-compacta text-center">{{ periodo.dias_gozo|floatformat:0 }}</td>
-                                <td class="col-compacta text-center">{{ periodo.dias_restantes|floatformat:0 }}</td>
-
-                                <td id="cell-ferias-{{ periodo.id }}"
-                                    data-periodo-id="{{ periodo.id }}"
-                                    data-nome="{{ colaborador.nome }}"
-                                    data-periodo-label="{{ periodo.inicio_aquisitivo|date:'d/m/Y' }} → {{ periodo.fim_aquisitivo|date:'d/m/Y' }}"
-                                    data-dias-direito="{{ periodo.dias_direito|floatformat:0 }}"
-                                    data-parcelas='{{ periodo.parcelas.all|jsonparcelas }}'>
-
-                                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        <span id="resumo-{{ periodo.id }}">
-                                            {% now "Y-m" as mes_atual %}
-                                            {% for parcela in periodo.parcelas.all %}
-                                                <span class="badge-parcela
-                                                    {% if parcela.mes_ferias < mes_atual %}badge-parcela-passada
-                                                    {% elif parcela.mes_ferias == mes_atual %}badge-parcela-atual
-                                                    {% endif %}">
-                                                    {{ parcela.mes_ferias_display }}{% if parcela.dias %} ({{ parcela.dias|floatformat:0 }}d){% endif %}
-                                                </span>
-                                            {% empty %}
-                                                <span class="text-muted" style="font-size:0.78rem;">—</span>
-                                            {% endfor %}
-                                        </span>
-                                        <button class="btn btn-editar-ferias btn-sm"
-                                                onclick="abrirModal({{ periodo.id }})">
-                                            <i class="bi bi-pencil-fill"></i>
-                                        </button>
-                                    </div>
+                                <td rowspan="{{ colaborador.periodos.count }}"
+                                    class="col-compacta fw-semibold">
+                                    {{ colaborador.nome }}
                                 </td>
+                                <td rowspan="{{ colaborador.periodos.count }}"
+                                    class="col-compacta text-muted"
+                                    style="font-size:0.78rem;">
+                                    {{ colaborador.empresa }}
+                                </td>
+                                <td rowspan="{{ colaborador.periodos.count }}"
+                                    class="col-compacta text-muted"
+                                    style="font-size:0.78rem;">
+                                    {{ colaborador.data_admissao|date:"d/m/Y"|default:"—" }}
+                                </td>
+                                <td rowspan="{{ colaborador.periodos.count }}"
+                                    class="col-compacta text-muted"
+                                    style="font-size:0.78rem;">
+                                    {{ colaborador.cargo }}
+                                </td>
+                            {% endif %}
 
-                                <td class="col-compacta text-center">
-                                    <span id="status-badge-{{ periodo.id }}"
-                                          class="badge {{ badge.0 }}"
-                                          style="font-size:0.72rem;">
-                                        {{ badge.1 }}
+                            <td class="col-compacta">{{ periodo.inicio_aquisitivo|date:"d/m/Y" }}</td>
+                            <td class="col-compacta">{{ periodo.limite_ideal|date:"d/m/Y"|default:"—" }}</td>
+                            <td class="col-compacta {% if periodo.status_limite == 'warning' or periodo.status_limite == 'danger' %}text-danger fw-semibold{% endif %}">
+                                {{ periodo.limite_maximo|date:"d/m/Y"|default:"—" }}
+                            </td>
+                            <td class="col-compacta text-center">{{ periodo.dias_direito|floatformat:0 }}</td>
+                            <td class="col-compacta text-center">{{ periodo.dias_gozo|floatformat:0 }}</td>
+                            <td class="col-compacta text-center">{{ periodo.dias_restantes|floatformat:0 }}</td>
+
+                            <td id="cell-ferias-{{ periodo.id }}"
+                                data-periodo-id="{{ periodo.id }}"
+                                data-nome="{{ colaborador.nome }}"
+                                data-periodo-label="{{ periodo.inicio_aquisitivo|date:'d/m/Y' }} → {{ periodo.fim_aquisitivo|date:'d/m/Y' }}"
+                                data-dias-direito="{{ periodo.dias_direito|floatformat:0 }}"
+                                data-parcelas='{{ periodo.parcelas.all|jsonparcelas }}'>
+
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span id="resumo-{{ periodo.id }}">
+                                        {% now "Y-m" as mes_atual %}
+                                        {% for parcela in periodo.parcelas.all %}
+                                            <span class="badge-parcela
+                                                {% if parcela.mes_ferias < mes_atual %}badge-parcela-passada
+                                                {% elif parcela.mes_ferias == mes_atual %}badge-parcela-atual
+                                                {% endif %}">
+                                                {{ parcela.mes_ferias_display }}{% if parcela.dias %} ({{ parcela.dias|floatformat:0 }}d){% endif %}
+                                            </span>
+                                        {% empty %}
+                                            <span class="text-muted" style="font-size:0.78rem;">—</span>
+                                        {% endfor %}
                                     </span>
-                                </td>
+                                    <button class="btn btn-editar-ferias btn-sm"
+                                            onclick="abrirModal({{ periodo.id }})">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
 
-                            </tr>
-                            {% endwith %}
+                            <td class="col-compacta text-center">
+                                <span id="status-badge-{{ periodo.id }}"
+                                      class="badge {{ badge.0 }}"
+                                      style="font-size:0.72rem;">
+                                    {{ badge.1 }}
+                                </span>
+                            </td>
 
-                        {% empty %}
-                            <tr>
-                                <td class="col-compacta">{{ colaborador.codigo }}</td>
-                                <td class="col-compacta fw-semibold">{{ colaborador.nome }}</td>
-                                <td class="col-compacta">{{ colaborador.data_admissao|date:"d/m/Y"|default:"—" }}</td>
-                                <td class="col-compacta">{{ colaborador.cargo }}</td>
-                                <td colspan="8" class="text-muted text-center">Sem períodos aquisitivos</td>
-                            </tr>
-                        {% endfor %}
+                        </tr>
+                        {% endwith %}
 
                     {% empty %}
                         <tr>
-                            <td colspan="12">
-                                <div class="empty-state">
-                                    <i class="bi bi-inbox"></i>
-                                    <p class="mb-2 fw-semibold">Nenhum colaborador encontrado</p>
-                                    <a href="{% url 'importar' %}" class="btn-rennova-primary btn-rennova-sm">
-                                        <i class="bi bi-cloud-upload me-1"></i> Importar provisão do ERP
-                                    </a>
-                                </div>
-                            </td>
+                            <td class="col-compacta">{{ colaborador.codigo }}</td>
+                            <td class="col-compacta fw-semibold">{{ colaborador.nome }}</td>
+                            <td class="col-compacta">{{ colaborador.empresa }}</td>
+                            <td class="col-compacta">{{ colaborador.data_admissao|date:"d/m/Y"|default:"—" }}</td>
+                            <td class="col-compacta">{{ colaborador.cargo }}</td>
+                            <td colspan="8" class="text-muted text-center">Sem períodos aquisitivos</td>
                         </tr>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
+
+                {% empty %}
+                    <tr>
+                        <td colspan="13">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p class="mb-2 fw-semibold">Nenhum colaborador encontrado</p>
+                                <a href="{% url 'importar' %}" class="btn-rennova-primary btn-rennova-sm">
+                                    <i class="bi bi-cloud-upload me-1"></i> Importar provisão do ERP
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -564,12 +587,23 @@ function deletarParcela(parcelaId) {
     .then(data => {
         if (data.ok) {
             atualizarUI(periodoAtivo, data);
-            showToast('Parcela removida.', 'warning');
+            showToast('Parcela removida.', 'success');
         } else {
             showToast(data.erro || 'Erro ao remover.', 'danger');
         }
     })
     .catch(() => showToast('Erro de conexão com o servidor.', 'danger'));
+}
+
+function showToast(msg, tipo) {
+    const toast = document.getElementById('liveToast');
+    if (!toast) return;
+    const body = toast.querySelector('.toast-body');
+    if (body) body.textContent = msg;
+    toast.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
+    if (tipo === 'success') toast.classList.add('bg-success', 'text-white');
+    if (tipo === 'danger')  toast.classList.add('bg-danger',  'text-white');
+    bootstrap.Toast.getOrCreateInstance(toast).show();
 }
 </script>
 {% endblock %}
