@@ -6,6 +6,8 @@ from django.views.decorators.http import require_POST
 from django.db import transaction
 import json
 from decimal import Decimal, InvalidOperation
+from django.utils import timezone
+
 
 from .models import Colaborador, PeriodoAquisitivo, ParcelaFerias, ImportacaoProvisao
 from .utils import processar_csv, analisar_importacao
@@ -67,6 +69,11 @@ def index(request):
     )
 
     ultima_importacao = ImportacaoProvisao.objects.first()
+    
+    importacao_desatualizada = (
+        ultima_importacao is not None
+        and (timezone.now() - ultima_importacao.data_importacao).days > 30
+    )
 
     return render(request, 'provisao/index.html', {
         'colaboradores':      colaboradores_list,
@@ -80,6 +87,7 @@ def index(request):
         'urgentes':           urgentes,
         'atencao':            atencao,
         'ultima_importacao':  ultima_importacao,
+        'importacao_desatualizada': importacao_desatualizada
     })
 
 

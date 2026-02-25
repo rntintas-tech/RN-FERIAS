@@ -40,6 +40,170 @@
         width: 1%;
         white-space: nowrap;
     }
+
+    
+/* ── Painel de filtros ── */
+.filtros-panel {
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--box-shadow-sm);
+    margin-bottom: 1rem;
+}
+
+/* Cabeçalho com gradiente — igual ao rennova-card-header */
+.filtros-header {
+    background: var(--secondary-gradient);
+    padding: 0.65rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.filtros-header-title {
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.92;
+}
+
+/* Corpo dos filtros com fundo levemente cinza — contraste sutil */
+.filtros-body {
+    background: #f0f4f8;
+    padding: 1rem 1.25rem;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+}
+
+/* Campo individual: label pequeno + input */
+.filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filtro-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.filtro-input {
+    height: 36px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 0.85rem;
+    padding: 0 12px;
+    color: var(--text-color);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+}
+
+.filtro-input:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(var(--secondary-color-rgb), 0.15);
+}
+
+/* Separador vertical entre grupos */
+.filtro-divider {
+    width: 1px;
+    background: var(--border-color);
+    align-self: stretch;
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Pills de status — destaque máximo */
+.status-chips {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 2px solid;
+    text-decoration: none;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.status-chip .chip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Urgente */
+.chip-danger              { color: var(--danger-color);  border-color: rgba(220,53,69,0.4);  background: rgba(220,53,69,0.06); }
+.chip-danger:hover        { color: #fff; border-color: var(--danger-color); background: var(--danger-color); }
+.chip-danger.chip-ativo   { color: #fff; border-color: var(--danger-color); background: var(--danger-color); }
+.chip-danger .chip-dot    { background: var(--danger-color); }
+.chip-danger.chip-ativo .chip-dot { background: #fff; }
+
+/* Atenção */
+.chip-warning              { color: #7d5a00; border-color: rgba(255,193,7,0.5);  background: rgba(255,193,7,0.08); }
+.chip-warning:hover        { color: #1a1a1a; border-color: var(--warning-color); background: var(--warning-color); }
+.chip-warning.chip-ativo   { color: #1a1a1a; border-color: var(--warning-color); background: var(--warning-color); }
+.chip-warning .chip-dot    { background: var(--warning-color); }
+
+/* OK */
+.chip-ok              { color: var(--success-color); border-color: rgba(40,167,69,0.4);  background: rgba(40,167,69,0.06); }
+.chip-ok:hover        { color: #fff; border-color: var(--success-color); background: var(--success-color); }
+.chip-ok.chip-ativo   { color: #fff; border-color: var(--success-color); background: var(--success-color); }
+.chip-ok .chip-dot    { background: var(--success-color); }
+.chip-ok.chip-ativo .chip-dot { background: #fff; }
+
+
+
+/* Card com estado de alerta — borda vermelha no lugar da azul info */
+.stat-card-alerta {
+    border-color: var(--danger-color) !important;
+    background: rgba(220, 53, 69, 0.03);
+}
+
+/* Flag vermelha que pisca */
+.stat-flag-alerta {
+    color: var(--danger-color);
+    font-size: 0.85rem;
+    animation: pisca 1.2s ease-in-out infinite;
+}
+
+/* Texto de aviso piscando */
+.stat-aviso-pisca {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--danger-color);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    animation: pisca 1.2s ease-in-out infinite;
+}
+
+/* Pisca: vai de opacidade 1 → 0.2 → 1, mais suave que display:none */
+@keyframes pisca {
+    0%,  100% { opacity: 1;   }
+    50%        { opacity: 0.2; }
+}
+
 </style>
 {% endblock %}
 
@@ -91,83 +255,160 @@
     </div>
 
     <div class="col-6 col-md-3 animate-up">
-        <div class="rennova-card stat-card info h-100 mb-0">
+        <div class="rennova-card stat-card h-100 mb-0
+                    {% if importacao_desatualizada %}stat-card-alerta{% else %}info{% endif %}">
             <div class="rennova-card-body py-3">
-                <div class="stat-label">Última importação</div>
-                <div style="font-size:0.85rem;color:var(--info-color);">
-                    {% if ultima_importacao %}
+
+                <div class="stat-label d-flex align-items-center justify-content-between">
+                    <span>Última importação</span>
+                    {% if importacao_desatualizada %}
+                        <!-- Flag vermelha piscando: chama atenção sem ser invasiva -->
+                        <span class="stat-flag-alerta" title="Importação desatualizada">
+                            <i class="bi bi-flag-fill"></i>
+                        </span>
+                    {% endif %}
+                </div>
+
+                {% if ultima_importacao %}
+                    <div style="font-size:0.85rem; color:var(--info-color); margin-top:4px;">
                         {{ ultima_importacao.data_importacao|date:"d/m/Y" }}<br>
                         <span class="text-muted" style="font-size:0.75rem;">
                             {{ ultima_importacao.data_importacao|date:"H:i" }}
                         </span>
-                    {% else %}
-                        <span class="text-muted">Nenhuma ainda</span>
+                    </div>
+
+                    <!-- Aviso piscando — só aparece quando desatualizado -->
+                    {% if importacao_desatualizada %}
+                        <div class="stat-aviso-pisca mt-2">
+                            <i class="bi bi-exclamation-circle-fill me-1"></i>
+                            Atualize a provisão
+                        </div>
                     {% endif %}
-                </div>
+
+                {% else %}
+                    <span class="text-muted" style="font-size:0.85rem;">Nenhuma ainda</span>
+                {% endif %}
+
             </div>
         </div>
     </div>
 
 </div>
 
+
 <!-- ═══ PAINEL DE FILTROS ═══ -->
-<div class="rennova-card mb-3 animate-up" style="animation-delay:0.3s">
-    <div class="rennova-card-body py-2">
-        <form method="get" class="d-flex align-items-end gap-2 flex-wrap">
+<div class="filtros-panel animate-up" style="animation-delay:0.3s">
 
-            <!-- Busca por nome / cargo -->
-            <div class="input-group" style="max-width:280px;">
-                <span class="input-group-text bg-white border-end-0">
-                    <i class="bi bi-search text-muted"></i>
-                </span>
-                <input type="text" name="busca"
-                       class="form-control border-start-0 ps-0"
-                       placeholder="Buscar por nome..."
-                       value="{{ busca }}">
-            </div>
+    <!-- Header gradiente — mesmo padrão dos cards do sistema -->
+    <div class="filtros-header">
+        <span class="filtros-header-title">
+            <i class="bi bi-funnel-fill"></i> Filtros
+        </span>
 
-            <!-- Filtro empresa -->
-            <select name="empresa" class="form-select form-select-sm" style="max-width:200px;">
-                <option value="">Todas as empresas</option>
-                {% for emp in todas_empresas %}
-                    <option value="{{ emp }}" {% if filtro_empresa == emp %}selected{% endif %}>
-                        {{ emp }}
-                    </option>
-                {% endfor %}
-            </select>
-
-            <!-- Filtro cargo -->
-            <select name="cargo" class="form-select form-select-sm" style="max-width:220px;">
-                <option value="">Todos os cargos</option>
-                {% for cargo in todos_cargos %}
-                    <option value="{{ cargo }}" {% if filtro_cargo == cargo %}selected{% endif %}>
-                        {{ cargo }}
-                    </option>
-                {% endfor %}
-            </select>
-
-            <!-- Filtro status -->
-            <select name="status" class="form-select form-select-sm" style="max-width:160px;">
-                <option value="">Todos os status</option>
-                <option value="danger"  {% if filtro_status == 'danger'  %}selected{% endif %}>⚠ Urgente</option>
-                <option value="warning" {% if filtro_status == 'warning' %}selected{% endif %}>⏰ Atenção</option>
-                <option value="ok"      {% if filtro_status == 'ok'      %}selected{% endif %}>✔ OK</option>
-            </select>
-
-            <button class="btn btn-sm btn-outline-secondary" type="submit">Filtrar</button>
-
-            <!-- Limpar filtros: só aparece se algum filtro estiver ativo -->
-            {% if busca or filtro_empresa or filtro_cargo or filtro_status %}
-                <a href="{% url 'index' %}" class="btn btn-sm btn-outline-danger">
-                    <i class="bi bi-x-lg me-1"></i>Limpar
-                </a>
-                <span class="badge-rennova badge-rennova-primary align-self-center">
+        <!-- Resultado + limpar: aparece só quando há filtro ativo -->
+        {% if busca or filtro_empresa or filtro_cargo or filtro_status %}
+            <div class="d-flex align-items-center gap-2">
+                <span style="color:rgba(255,255,255,0.85); font-size:0.78rem;">
+                    <i class="bi bi-check-circle-fill me-1" style="color:#00d2ff;"></i>
                     {{ total }} resultado{{ total|pluralize }}
                 </span>
-            {% endif %}
+                <a href="{% url 'index' %}"
+                   style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+                          color:#fff; font-size:0.72rem; padding:3px 10px; border-radius:20px;
+                          text-decoration:none; display:inline-flex; align-items:center; gap:4px;
+                          transition:background 0.2s;"
+                   onmouseover="this.style.background='rgba(255,255,255,0.25)'"
+                   onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+                    <i class="bi bi-x-lg"></i> Limpar
+                </a>
+            </div>
+        {% endif %}
+    </div>
 
+    <!-- Corpo: campos alinhados + botão à direita -->
+    <div class="filtros-body">
+        <form method="get">
+            <div class="d-flex align-items-end gap-3 flex-wrap">
+
+                <!-- Busca por nome / cargo -->
+                <div class="filtro-grupo flex-grow-1" style="min-width:200px; max-width:300px;">
+                    <label class="filtro-label" for="f-busca">
+                        <i class="bi bi-search me-1"></i>Nome ou cargo
+                    </label>
+                    <div style="position:relative;">
+                        <input type="text" name="busca" id="f-busca"
+                               class="filtro-input"
+                               placeholder="Pesquisar..."
+                               value="{{ busca }}"
+                               style="padding-left:32px;">
+                        <i class="bi bi-search"
+                           style="position:absolute; left:10px; top:50%; transform:translateY(-50%);
+                                  font-size:0.8rem; color:var(--text-muted); pointer-events:none;"></i>
+                    </div>
+                </div>
+
+                <div class="filtro-divider d-none d-md-block"></div>
+
+                <!-- Empresa -->
+                <div class="filtro-grupo" style="min-width:160px; max-width:220px;">
+                    <label class="filtro-label" for="f-empresa">
+                        <i class="bi bi-building me-1"></i>Empresa
+                    </label>
+                    <select name="empresa" id="f-empresa" class="filtro-input">
+                        <option value="">Todas</option>
+                        {% for emp in todas_empresas %}
+                            <option value="{{ emp }}" {% if filtro_empresa == emp %}selected{% endif %}>{{ emp }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Cargo -->
+                <div class="filtro-grupo" style="min-width:160px; max-width:220px;">
+                    <label class="filtro-label" for="f-cargo">
+                        <i class="bi bi-person-badge me-1"></i>Cargo
+                    </label>
+                    <select name="cargo" id="f-cargo" class="filtro-input">
+                        <option value="">Todos</option>
+                        {% for cargo in todos_cargos %}
+                            <option value="{{ cargo }}" {% if filtro_cargo == cargo %}selected{% endif %}>{{ cargo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filtro-divider d-none d-md-block"></div>
+
+                <!-- Status: chips clicáveis — sem submit, aplicam direto -->
+                <div class="filtro-grupo">
+                    <label class="filtro-label"><i class="bi bi-flag me-1"></i>Status</label>
+                    <div class="d-flex gap-2 flex-wrap align-items-center" style="height:36px;">
+                        <a href="?busca={{ busca }}&empresa={{ filtro_empresa }}&cargo={{ filtro_cargo }}&status={% if filtro_status == 'danger' %}{% else %}danger{% endif %}"
+                           class="status-chip chip-danger {% if filtro_status == 'danger' %}chip-ativo{% endif %}">
+                            <span class="chip-dot"></span> Urgente
+                        </a>
+                        <a href="?busca={{ busca }}&empresa={{ filtro_empresa }}&cargo={{ filtro_cargo }}&status={% if filtro_status == 'warning' %}{% else %}warning{% endif %}"
+                           class="status-chip chip-warning {% if filtro_status == 'warning' %}chip-ativo{% endif %}">
+                            <span class="chip-dot"></span> Atenção
+                        </a>
+                        <a href="?busca={{ busca }}&empresa={{ filtro_empresa }}&cargo={{ filtro_cargo }}&status={% if filtro_status == 'ok' %}{% else %}ok{% endif %}"
+                           class="status-chip chip-ok {% if filtro_status == 'ok' %}chip-ativo{% endif %}">
+                            <span class="chip-dot"></span> OK
+                        </a>
+                    </div>
+                    <input type="hidden" name="status" value="{{ filtro_status }}">
+                </div>
+
+                <!-- Botão aplicar — empurrado para a direita -->
+                <div class="ms-auto flex-shrink-0">
+                    <button class="btn-rennova-primary btn-rennova-sm" type="submit"
+                            style="height:36px; padding:0 18px;">
+                        <i class="bi bi-search me-1"></i> Aplicar
+                    </button>
+                </div>
+
+            </div>
         </form>
     </div>
+
 </div>
 
 <!-- ═══ TABELA PRINCIPAL ═══ -->
@@ -184,19 +425,40 @@
             </small>
         </div>
 
-        <div class="d-flex gap-3 flex-wrap mt-2" style="font-size:0.77rem;color:rgba(255,255,255,0.9);">
-            <span>
-                <span class="badge bg-danger" style="font-size:0.7rem;">⚠ URGENTE</span>
-                passou do limite máximo
+         <!-- Legenda: status de prazo + cores dos badges de férias -->
+        <div class="d-flex gap-3 flex-wrap mt-2" style="font-size:0.77rem; color:rgba(255,255,255,0.85);">
+
+            <!-- Status de prazo do limite máximo -->
+            <span class="d-flex align-items-center gap-1">
+                <span class="badge bg-danger" style="font-size:0.68rem;">⚠ URGENTE</span>
+                &lt; 60 dias p/ limite máx.
             </span>
-            <span>
-                <span class="badge bg-warning text-dark" style="font-size:0.7rem;">⏰ ATENÇÃO</span>
-                prazo se aproximando
+            <span class="d-flex align-items-center gap-1">
+                <span class="badge bg-warning text-dark" style="font-size:0.68rem;">⏰ ATENÇÃO</span>
+                &lt; 90 dias p/ limite máx.
             </span>
-            <span>
-                <span class="badge bg-success" style="font-size:0.7rem;">✔ OK</span>
+            <span class="d-flex align-items-center gap-1">
+                <span class="badge bg-success" style="font-size:0.68rem;">✔ OK</span>
                 dentro do prazo
             </span>
+
+            <!-- Separador visual -->
+            <span style="opacity:0.4;">|</span>
+
+            <!-- Significado das cores dos badges de férias agendadas -->
+            <span class="d-flex align-items-center gap-1">
+                <span class="badge-parcela" style="font-size:0.68rem; padding:2px 7px;">Mês/Ano</span>
+                futuro
+            </span>
+            <span class="d-flex align-items-center gap-1">
+                <span class="badge-parcela badge-parcela-atual" style="font-size:0.68rem; padding:2px 7px;">Mês/Ano</span>
+                este mês
+            </span>
+            <span class="d-flex align-items-center gap-1">
+                <span class="badge-parcela badge-parcela-passada" style="font-size:0.68rem; padding:2px 7px;">Mês/Ano</span>
+                realizado
+            </span>
+
         </div>
     </div>
 

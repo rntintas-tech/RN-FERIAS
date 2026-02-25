@@ -88,18 +88,42 @@ def sintetizar_empresa(empresa_raw):
     return _EMPRESA_MAP.get(codigo, f"{codigo} - RN - ???")
 
 
+# Mapa: prefixo uppercase → nome canônico
+# Qualquer cargo que COMECE com a chave vira o valor.
+# Ex: "VENDEDOR EXTERNO" começa com "VENDEDOR" → "Vendedor"
+_CARGO_PREFIXOS = [
+    ('GERENTE DE LOJA',         'Gerente de Loja'),
+    ('VENDEDOR',                'Vendedor'),
+    ('ASSISTENTE DE LOJA',      'Assistente de Loja'),
+    ('ASSISTENTE COMERCIAL',    'Assistente Comercial'),
+    ('COORDENADOR COMERCIAL',   'Coordenador Comercial'),
+]
+
+
 def sintetizar_cargo(cargo_raw):
     """
-    Remove o sufixo de nível/patente do cargo, deixando só o nome base.
-    Exemplos:
-        'GERENTE DE LOJA G4 - III' → 'GERENTE DE LOJA'
-        'VENDEDOR I'               → 'VENDEDOR'
-        'ASSISTENTE COMERCIAL II'  → 'ASSISTENTE COMERCIAL'
-        'COORDENADOR COMERCIAL'    → 'COORDENADOR COMERCIAL'  (sem alteração)
+    Normaliza o cargo em dois passos:
+    1. Remove sufixo de nível/patente (romano ou G+numeral): 'VENDEDOR II' → 'VENDEDOR'
+    2. Agrupa variações por prefixo: 'VENDEDOR EXTERNO' → 'Vendedor'
 
-    Padrão removido: espaço + (Gx - )? + algarismo romano no fim da string.
+    Isso garante que no filtro apareça apenas o cargo base, sem fragmentar
+    em múltiplas opções para o mesmo tipo de função.
     """
-    return re.sub(r'\s+(G\d+\s*[-–]\s*)?(I{1,4}|IV|VI{0,3}|IX)\s*$', '', cargo_raw.strip())
+    # Passo 1: remove sufixo numérico/romano
+    sem_sufixo = re.sub(
+        r'\s+(G\d+\s*[-–]\s*)?(I{1,4}|IV|VI{0,3}|IX)\s*$',
+        '',
+        cargo_raw.strip()
+    )
+
+    # Passo 2: agrupa por prefixo canônico
+    upper = sem_sufixo.upper()
+    for prefixo, canonico in _CARGO_PREFIXOS:
+        if upper == prefixo or upper.startswith(prefixo + ' '):
+            return canonico
+
+    # Sem match: título capitalizado (ex: "CAIXA" → "Caixa")
+    return sem_sufixo.title()
 
 
 def excel_serial_para_data(serial):
